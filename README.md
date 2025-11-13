@@ -64,20 +64,3 @@ Aplikasi ini memungkinkan **admin, dokter, dan pasien** untuk berinteraksi dalam
 | `prescriptions` | Relasi resep dengan obat dan rekam medis |
 
 ---
-
-## 🛠️ Teknologi yang Digunakan
-- **Laravel 11 + Breeze (Auth Multi-role)**
-- **MySQL** (Database)
-- **Tailwind CSS** (Frontend)
-- **Blade Template Engine**
-- **PHP 8.2+**
-- **Node.js + Vite**
-
----
-
-## 💻 Cara Menjalankan Proyek
-
-1. **Clone repository**
-   ```bash
-   git clone https://github.com/username/digitalisasi-rumah-sakit.git
-   cd digitalisasi-rumah-sakit
