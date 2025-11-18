@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Routing\Router;
+use App\Http\Middleware\RoleMiddleware;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -17,8 +19,8 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Bootstrap any application services.
      */
-    public function boot(): void
+    public function boot(Router $router): void
     {
-        //
+        $router->aliasMiddleware('role', RoleMiddleware::class);
     }
 }
