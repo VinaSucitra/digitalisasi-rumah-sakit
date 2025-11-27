@@ -27,6 +27,6 @@ class RoleMiddleware
             return $next($request);
         }
 
-        abort(403, 'Akses Dibatasi. Anda tidak memiliki izin untuk halaman ini.');
+         return redirect('/');
     }
 }

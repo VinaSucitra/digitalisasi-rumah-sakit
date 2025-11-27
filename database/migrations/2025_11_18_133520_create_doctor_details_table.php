@@ -10,16 +10,20 @@ return new class extends Migration
     {
         Schema::create('doctor_details', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')
-                  ->unique()
-                  ->constrained('users')
-                  ->onDelete('cascade'); 
 
+            // Relasi ke users (akun login dokter)
+            $table->foreignId('user_id')
+                ->constrained('users')
+                ->onDelete('cascade');
+
+            // Relasi ke poli
             $table->foreignId('poli_id')
-                  ->nullable() 
-                  ->constrained('polis')
-                  ->onDelete('set null');
-                  
+                ->constrained('polis')
+                ->onDelete('restrict');
+
+            $table->string('sip')->nullable(); // nomor STR/SIP
+            $table->text('bio')->nullable();
+
             $table->timestamps();
         });
     }

@@ -16,7 +16,7 @@ class AuthenticatedSessionController extends Controller
      */
     public function create(): View
     {
-        return view('auth.login');
+        return view('auth.login');  // Menampilkan halaman login
     }
 
     /**
@@ -24,11 +24,26 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): RedirectResponse
     {
+        // Proses autentikasi pengguna
         $request->authenticate();
 
+        // Regenerasi sesi untuk meningkatkan keamanan
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        // Periksa role pengguna dan arahkan sesuai role mereka
+        if (auth()->user()->role == 'dokter') {
+            // Jika role-nya 'dokter', arahkan ke dashboard dokter
+            return redirect()->route('doctor.dashboard');
+        } elseif (auth()->user()->role == 'admin') {
+            // Jika role-nya 'admin', arahkan ke dashboard admin
+            return redirect()->route('admin.dashboard');
+        } elseif (auth()->user()->role == 'pasien') {
+            // Jika role-nya 'pasien', arahkan ke dashboard pasien
+            return redirect()->route('patient.dashboard');
+        }
+
+        // Jika role tidak dikenali, arahkan ke halaman utama
+        return redirect('/');
     }
 
     /**
@@ -36,12 +51,16 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+        // Logout pengguna dari sesi
         Auth::guard('web')->logout();
 
+        // Hapus data sesi
         $request->session()->invalidate();
 
+        // Regenerasi token untuk menghindari serangan CSRF
         $request->session()->regenerateToken();
 
+        // Redirect ke halaman utama setelah logout
         return redirect('/');
     }
 }
