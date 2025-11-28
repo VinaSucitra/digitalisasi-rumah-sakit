@@ -106,7 +106,7 @@
             <a href="{{ route('guest.home') }}#services-section" onclick="closeMenu()" class="text-gray-700 hover:text-teal-600 transition font-medium border-b pb-2">LAYANAN</a>
             <a href="{{ route('guest.home') }}#contact-section" onclick="closeMenu()" class="text-gray-700 hover:text-teal-600 transition font-medium border-b pb-2">KONTAK KAMI</a>
             
-            <a href="{{ route('login') }}" class="text-teal-600 hover:text-teal-800 transition font-medium pt-4">LOGIN</a>
+            
         </div>
     </div>
 

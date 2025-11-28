@@ -32,7 +32,7 @@ use App\Http\Controllers\Auth\RegisteredUserController;
 
 /*
 |--------------------------------------------------------------------------|
-| PUBLIC / GUEST ROUTES                                                    |
+| PUBLIC / GUEST ROUTES
 |--------------------------------------------------------------------------|
 */
 // Route login
@@ -42,27 +42,25 @@ Route::post('/login', [AuthenticatedSessionController::class, 'store']);
 Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
 Route::post('/register', [RegisteredUserController::class, 'store']);
 
-// Landing Page (Guest) -> Jika login → redirect ke dashboard sesuai role
+// Landing Page (Guest)
 Route::get('/', function () {
     if (auth()->check()) {
         $role = auth()->user()->role;
-        // PENTING: Gunakan redirect()->route() untuk rute bernama.
-        // Role harus sesuai dengan prefix route yang didefinisikan di bawah (admin, doctor, patient).
         if (in_array($role, ['admin', 'doctor', 'patient'])) {
             return redirect()->route("$role.dashboard");
         }
     }
     return redirect()->route('guest.home'); 
-})->name('landing'); // Beri nama untuk rute root agar mudah dialihkan
+})->name('landing');
 
 // Halaman guest yang sebenarnya
-Route::get('/home', [HomeController::class, 'index'])->name('guest.home'); // Route untuk halaman beranda
+Route::get('/home', [HomeController::class, 'index'])->name('guest.home');
 
 Route::get('/doctors', [PublicDoctorController::class, 'index'])->name('public.doctors');
 
 /*
 |--------------------------------------------------------------------------|
-| AUTHENTICATED ROUTES (LOGIN REQUIRED)                                    |
+| AUTHENTICATED ROUTES (LOGIN REQUIRED)
 |--------------------------------------------------------------------------|
 */
 Route::middleware('auth')->group(function () {
@@ -70,11 +68,9 @@ Route::middleware('auth')->group(function () {
     // Redirect umum ke dashboard sesuai role
     Route::get('/dashboard', function () {
         $role = auth()->user()->role;
-        // Pastikan peran valid sebelum mengalihkan
         if (in_array($role, ['admin', 'doctor', 'patient'])) {
             return redirect()->route("$role.dashboard");
         }
-        // Jika peran tidak valid, arahkan ke rute default atau logout
         return redirect()->route('guest.home'); 
     })->name('dashboard');
 
@@ -85,10 +81,9 @@ Route::middleware('auth')->group(function () {
 
     /*
     |--------------------------------------------------------------------------|
-    | ADMIN ROUTES                                                             |
+    | ADMIN ROUTES
     |--------------------------------------------------------------------------|
     */
-    // Pastikan peran di DB adalah 'admin'
     Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {
         Route::get('/dashboard', [AdminDashboard::class, 'index'])->name('dashboard');
         
@@ -104,11 +99,10 @@ Route::middleware('auth')->group(function () {
 
     /*
     |--------------------------------------------------------------------------|
-    | DOCTOR ROUTES                                                            |
+    | DOCTOR ROUTES
     |--------------------------------------------------------------------------|
     */
-    // PENTING: Mengganti 'role:dokter' menjadi 'role:doctor' agar sesuai dengan prefix 'doctor'
-    // Asumsikan role di DB adalah 'doctor'. Jika di DB adalah 'dokter', kembalikan ke 'role:dokter'
+    // PASTI BENAR: 'role:doctor' (tanpa spasi)
     Route::middleware('role:doctor')->prefix('doctor')->name('doctor.')->group(function () {
         Route::get('/dashboard', [DoctorDashboard::class, 'index'])->name('dashboard');
         Route::resource('appointments', DoctorAppointment::class)->only(['index', 'show', 'update']);
@@ -117,11 +111,10 @@ Route::middleware('auth')->group(function () {
 
     /*
     |--------------------------------------------------------------------------|
-    | PATIENT ROUTES                                                           |
+    | PATIENT ROUTES
     |--------------------------------------------------------------------------|
     */
-    // PENTING: Mengganti 'role:pasien' menjadi 'role:patient'
-    // Asumsikan role di DB adalah 'patient'. Jika di DB adalah 'pasien', kembalikan ke 'role:pasien'
+    // PASTI BENAR: 'role:patient' (tanpa spasi)
     Route::middleware('role:patient')->prefix('patient')->name('patient.')->group(function () {
         Route::get('/dashboard', [PatientDashboard::class, 'index'])->name('dashboard');
         Route::resource('appointments', PatientAppointment::class)->only(['index', 'create', 'store', 'show']);
@@ -132,7 +125,7 @@ Route::middleware('auth')->group(function () {
 
 /*
 |--------------------------------------------------------------------------|
-| Auth routes (login/register)                                             |
+| Auth routes (login/register)
 |--------------------------------------------------------------------------|
 */
 require __DIR__.'/auth.php';

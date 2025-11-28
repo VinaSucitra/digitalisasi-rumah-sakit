@@ -11,53 +11,63 @@ use App\Models\MedicalRecord;
 use App\Models\Medicine;
 use App\Models\Prescription;
 use App\Models\PrescriptionItem;
+use Carbon\Carbon;
 
 class MedicalRecordController extends Controller
 {
     /**
      * HALAMAN UTAMA DOKTER:
-     * Menampilkan antrean konsultasi (janji temu yang sudah APPROVED untuk hari ini).
+     * Menampilkan antrean konsultasi (janji temu yang sudah APPROVED untuk hari ini) dan Riwayat RM.
      */
     public function index()
     {
-        $doctor = Auth::user()->doctorDetail;
+        $doctor = Auth::user()->doctorDetail; // Ambil detail dokter yang sedang login
 
         if (! $doctor) {
-            abort(403, 'Akun ini bukan dokter.');
+            abort(403, 'Akses ditolak: Akun ini bukan dokter.');
         }
 
-        $today = now()->toDateString();
-
+        $today = Carbon::now()->toDateString();
+        
+        // Perbaikan: Menggunakan 'booking_date' atau 'appointment_date' sesuai skema DB Anda.
+        // Asumsi menggunakan 'booking_date' karena 'appointment_date' memicu error sebelumnya.
         $appointments = Appointment::where('doctor_id', $doctor->id)
-            ->where('status', 'approved')
-            ->whereDate('booking_date', $today)
+            ->where('status', 'Approved')
+            ->whereDate('booking_date', $today) 
             ->with(['patient.user', 'schedule', 'doctor.poli'])
             ->orderBy('booking_date', 'asc')
             ->get();
+            
+        // Riwayat Rekam Medis terakhir (untuk sidebar/section riwayat)
+        $records = MedicalRecord::where('doctor_id', $doctor->id)
+                                ->with('patient.user')
+                                ->latest()
+                                ->take(5)
+                                ->get();
 
-        return view('doctor.medical_records.index', compact('appointments', 'today'));
+        return view('doctor.medical_records.index', compact('appointments', 'today', 'records'));
     }
 
     /**
-     * Form membuat rekam medis untuk sebuah appointment yang sudah approved.
-     *
-     * Route resource bawaan: /doctor/medical_records/create?appointment_id=XX
+     * Form membuat rekam medis.
      */
     public function create(Request $request)
     {
         $doctor = Auth::user()->doctorDetail;
-
-        if (! $doctor) {
-            abort(403, 'Akun ini bukan dokter.');
-        }
-
+        if (! $doctor) abort(403, 'Akses ditolak.');
+        
         $appointmentId = $request->query('appointment_id');
-
+        
         $appointment = Appointment::where('id', $appointmentId)
             ->where('doctor_id', $doctor->id)
-            ->where('status', 'approved')
+            ->where('status', 'Approved')
             ->with(['patient.user', 'schedule'])
             ->firstOrFail();
+
+        // Pencegahan duplikasi
+        if (MedicalRecord::where('appointment_id', $appointmentId)->exists()) {
+            return redirect()->route('doctor.medical_records.index')->with('error', 'Rekam medis untuk janji temu ini sudah pernah dibuat.');
+        }
 
         $medicines = Medicine::orderBy('name')->get();
 
@@ -70,34 +80,31 @@ class MedicalRecordController extends Controller
     public function store(Request $request)
     {
         $doctor = Auth::user()->doctorDetail;
-
-        if (! $doctor) {
-            abort(403, 'Akun ini bukan dokter.');
-        }
-
+        if (! $doctor) abort(403, 'Akses ditolak.');
+        
         $request->validate([
-            'appointment_id'      => 'required|exists:appointments,id',
-            'diagnosis'           => 'required|string',
-            'treatment'           => 'nullable|string',
-            'notes'               => 'nullable|string',
-            'visit_date'          => 'required|date',
-
-            // Resep (opsional)
-            'medicines'           => 'array',
-            'medicines.*.id'      => 'nullable|exists:medicines,id',
-            'medicines.*.quantity'=> 'nullable|integer|min:1',
-            'medicines.*.dosage'  => 'nullable|string|max:255',
+            'appointment_id' => 'required|exists:appointments,id',
+            'diagnosis'      => 'required|string|max:1000',
+            'treatment'      => 'nullable|string|max:1000',
+            'notes'          => 'nullable|string|max:1000',
+            'visit_date'     => 'required|date',
+            'medicines'      => 'array',
+            'medicines.*.id' => 'nullable|exists:medicines,id',
+            'medicines.*.quantity' => 'nullable|integer|min:1',
+            'medicines.*.dosage'   => 'nullable|string|max:255',
         ]);
 
         $appointment = Appointment::where('id', $request->appointment_id)
             ->where('doctor_id', $doctor->id)
-            ->whereIn('status', ['approved', 'pending']) // jaga-jaga
-            ->with('patient')
+            ->whereIn('status', ['Approved', 'Pending'])
             ->firstOrFail();
 
-        DB::transaction(function () use ($request, $appointment, $doctor) {
+        if (MedicalRecord::where('appointment_id', $appointment->id)->exists()) {
+             return redirect()->route('doctor.medical_records.index')->with('error', 'Rekam medis untuk janji temu ini sudah ada.');
+        }
 
-            // 1️⃣ Buat rekam medis
+        DB::transaction(function () use ($request, $appointment, $doctor) {
+            // 1. Buat rekam medis
             $medicalRecord = MedicalRecord::create([
                 'appointment_id' => $appointment->id,
                 'patient_id'     => $appointment->patient_id,
@@ -108,15 +115,14 @@ class MedicalRecordController extends Controller
                 'visit_date'     => $request->visit_date,
             ]);
 
-            // 2️⃣ Buat resep (jika ada obat yang diisi)
-            $hasMedicines = $request->filled('medicines');
+            // 2. Buat resep (jika ada obat)
+            $hasMedicines = collect($request->medicines)->filter(fn($item) => !empty($item['id']) && !empty($item['quantity']))->isNotEmpty();
 
             if ($hasMedicines) {
                 $prescription = Prescription::create([
                     'medical_record_id' => $medicalRecord->id,
-                    'status'            => 'pending', // atau 'ready' sesuai alurmu
+                    'status'            => 'pending',
                 ]);
-
                 foreach ($request->medicines as $item) {
                     if (!empty($item['id']) && !empty($item['quantity'])) {
                         PrescriptionItem::create([
@@ -129,57 +135,15 @@ class MedicalRecordController extends Controller
                 }
             }
 
-            // 3️⃣ Ubah status appointment jadi DONE
-            $appointment->update([
-                'status' => 'done',
-            ]);
+            // 3. Ubah status appointment jadi Selesai
+            $appointment->update(['status' => 'Selesai']);
         });
 
-        return redirect()
-            ->route('doctor.medical_records.index')
-            ->with('success', 'Rekam medis berhasil disimpan dan janji temu ditandai selesai.');
+        return redirect()->route('doctor.medical_records.index')->with('success', 'Rekam medis berhasil disimpan.');
     }
 
     /**
-     * Menampilkan detail rekam medis (untuk dokter).
-     */
-    public function show(MedicalRecord $medical_record)
-    {
-        $doctor = Auth::user()->doctorDetail;
-
-        if (! $doctor || $medical_record->doctor_id !== $doctor->id) {
-            abort(403, 'Akses ditolak');
-        }
-
-        $medical_record->load([
-            'patient.user',
-            'doctor.user',
-            'appointment',
-            'prescriptions.items.medicine',
-        ]);
-
-        return view('doctor.medical_records.show', compact('medical_record'));
-    }
-
-    /**
-     * Form edit rekam medis (opsional).
-     */
-    public function edit(MedicalRecord $medical_record)
-    {
-        $doctor = Auth::user()->doctorDetail;
-
-        if (! $doctor || $medical_record->doctor_id !== $doctor->id) {
-            abort(403, 'Akses ditolak');
-        }
-
-        $medical_record->load(['appointment', 'patient.user']);
-        $medicines = Medicine::orderBy('name')->get();
-
-        return view('doctor.medical_records.edit', compact('medical_record', 'medicines'));
-    }
-
-    /**
-     * Update rekam medis (tanpa mengubah appointment).
+     * Update rekam medis (termasuk Resep).
      */
     public function update(Request $request, MedicalRecord $medical_record)
     {
@@ -190,21 +154,79 @@ class MedicalRecordController extends Controller
         }
 
         $request->validate([
-            'diagnosis'  => 'required|string',
-            'treatment'  => 'nullable|string',
-            'notes'      => 'nullable|string',
-            'visit_date' => 'required|date',
+            'diagnosis'             => 'required|string|max:1000',
+            'treatment'             => 'nullable|string|max:1000',
+            'notes'                 => 'nullable|string|max:1000',
+            'visit_date'            => 'required|date',
+            'medicines'             => 'array',
+            'medicines.*.id'        => 'nullable|exists:medicines,id',
+            'medicines.*.quantity'  => 'nullable|integer|min:1',
+            'medicines.*.dosage'    => 'nullable|string|max:255',
         ]);
 
-        $medical_record->update([
-            'diagnosis'  => $request->diagnosis,
-            'treatment'  => $request->treatment,
-            'notes'      => $request->notes,
-            'visit_date' => $request->visit_date,
-        ]);
+        DB::transaction(function () use ($request, $medical_record) {
 
-        return redirect()
-            ->route('doctor.medical_records.show', $medical_record->id)
-            ->with('success', 'Rekam medis berhasil diperbarui.');
+            // A. Update data utama Rekam Medis
+            $medical_record->update([
+                'diagnosis'  => $request->diagnosis,
+                'treatment'  => $request->treatment,
+                'notes'      => $request->notes,
+                'visit_date' => $request->visit_date,
+            ]);
+
+            // B. LOGIKA UPDATE RESEP (DELETE & RECREATE)
+            $prescription = $medical_record->prescriptions->first();
+            $validMedicines = collect($request->medicines)->filter(fn($item) => !empty($item['id']) && !empty($item['quantity']));
+            $hasValidMedicines = $validMedicines->isNotEmpty();
+            
+            if ($hasValidMedicines) {
+                
+                if (!$prescription) {
+                    $prescription = Prescription::create([
+                        'medical_record_id' => $medical_record->id,
+                        'status'            => 'pending',
+                    ]);
+                } else {
+                    $prescription->items()->delete();
+                }
+
+                foreach ($validMedicines as $item) {
+                    PrescriptionItem::create([
+                        'prescription_id' => $prescription->id,
+                        'medicine_id'     => $item['id'],
+                        'quantity'        => $item['quantity'],
+                        'dosage'          => $item['dosage'] ?? null,
+                    ]);
+                }
+                
+            } elseif ($prescription) {
+                // Hapus resep jika form dikosongkan
+                $prescription->items()->delete();
+                $prescription->delete();
+            }
+        });
+
+        return redirect()->route('doctor.medical_records.show', $medical_record->id)->with('success', 'Rekam medis dan resep berhasil diperbarui.');
+    }
+
+    // ... (Fungsi show dan edit lainnya, tetap sama)
+    public function show(MedicalRecord $medical_record)
+    {
+        $doctor = Auth::user()->doctorDetail;
+        if (! $doctor || $medical_record->doctor_id !== $doctor->id) abort(403, 'Akses ditolak');
+        
+        $medical_record->load(['patient.user', 'doctor.user', 'appointment', 'prescriptions.items.medicine']);
+        return view('doctor.medical_records.show', compact('medical_record'));
+    }
+    
+    public function edit(MedicalRecord $medical_record)
+    {
+        $doctor = Auth::user()->doctorDetail;
+        if (! $doctor || $medical_record->doctor_id !== $doctor->id) abort(403, 'Akses ditolak');
+        
+        $medical_record->load(['appointment', 'patient.user', 'prescriptions.items']);
+        $medicines = Medicine::orderBy('name')->get();
+        
+        return view('doctor.medical_records.edit', compact('medical_record', 'medicines'));
     }
 }

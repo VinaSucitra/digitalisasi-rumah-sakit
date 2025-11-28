@@ -31,13 +31,13 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerate();
 
         // Periksa role pengguna dan arahkan sesuai role mereka
-        if (auth()->user()->role == 'dokter') {
+        if (auth()->user()->role == 'doctor') {
             // Jika role-nya 'dokter', arahkan ke dashboard dokter
             return redirect()->route('doctor.dashboard');
         } elseif (auth()->user()->role == 'admin') {
             // Jika role-nya 'admin', arahkan ke dashboard admin
             return redirect()->route('admin.dashboard');
-        } elseif (auth()->user()->role == 'pasien') {
+        } elseif (auth()->user()->role == 'patient') {
             // Jika role-nya 'pasien', arahkan ke dashboard pasien
             return redirect()->route('patient.dashboard');
         }

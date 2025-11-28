@@ -64,12 +64,12 @@ class User extends Authenticatable
 
     public function isDoctor(): bool
     {
-        return $this->role === 'dokter'; // pastikan value di DB = 'dokter'
+        return $this->role === 'doctor'; // pastikan value di DB = 'dokter'
     }
 
     public function isPatient(): bool
     {
-        return $this->role === 'pasien';
+        return $this->role === 'patien';
     }
 
     /**
