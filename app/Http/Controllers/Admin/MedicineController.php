@@ -13,6 +13,7 @@ class MedicineController extends Controller
      */
     public function index()
     {
+        // Mengambil semua data obat dengan urutan berdasarkan nama
         $medicines = Medicine::orderBy('name')->paginate(15);
         return view('admin.medicines.index', compact('medicines'));
     }
@@ -22,6 +23,7 @@ class MedicineController extends Controller
      */
     public function create()
     {
+        // Menampilkan form untuk menambahkan obat baru
         return view('admin.medicines.create');
     }
 
@@ -30,16 +32,18 @@ class MedicineController extends Controller
      */
     public function store(Request $request)
     {
+        // Validasi input dari form
         $validatedData = $request->validate([
             'name' => 'required|string|max:255|unique:medicines,name',
-            'manufacturer' => 'nullable|string|max:255',
-            'description' => 'nullable|string',
-            'price' => 'required|numeric|min:0',
-            'stock' => 'required|integer|min:0',
+            'type' => 'required|string|max:255', // Menambahkan jenis obat
+            'price' => 'required|numeric|min:0', // Harga obat
+            'description' => 'nullable|string',  // Deskripsi opsional
         ]);
 
+        // Menyimpan data obat ke dalam database
         Medicine::create($validatedData);
 
+        // Redirect ke halaman daftar obat dengan pesan sukses
         return redirect()->route('admin.medicines.index')
                          ->with('success', 'Data Obat berhasil ditambahkan.');
     }
@@ -49,6 +53,7 @@ class MedicineController extends Controller
      */
     public function show(Medicine $medicine)
     {
+        // Menampilkan detail dari obat yang dipilih
         return view('admin.medicines.show', compact('medicine'));
     }
 
@@ -57,6 +62,7 @@ class MedicineController extends Controller
      */
     public function edit(Medicine $medicine)
     {
+        // Menampilkan form untuk mengedit data obat
         return view('admin.medicines.edit', compact('medicine'));
     }
 
@@ -65,16 +71,18 @@ class MedicineController extends Controller
      */
     public function update(Request $request, Medicine $medicine)
     {
+        // Validasi input dari form update
         $validatedData = $request->validate([
             'name' => 'required|string|max:255|unique:medicines,name,' . $medicine->id, 
-            'manufacturer' => 'nullable|string|max:255',
-            'description' => 'nullable|string',
-            'price' => 'required|numeric|min:0',
-            'stock' => 'required|integer|min:0',
+            'type' => 'required|string|max:255', // Jenis obat
+            'price' => 'required|numeric|min:0', // Harga obat
+            'description' => 'nullable|string',  // Deskripsi opsional
         ]);
 
+        // Update data obat di database
         $medicine->update($validatedData);
 
+        // Redirect ke halaman daftar obat dengan pesan sukses
         return redirect()->route('admin.medicines.index')
                          ->with('success', 'Data Obat berhasil diperbarui.');
     }
@@ -84,8 +92,10 @@ class MedicineController extends Controller
      */
     public function destroy(Medicine $medicine)
     {
+        // Menghapus data obat
         $medicine->delete();
 
+        // Redirect ke halaman daftar obat dengan pesan sukses
         return redirect()->route('admin.medicines.index')
                          ->with('success', 'Data Obat berhasil dihapus.');
     }

@@ -18,7 +18,7 @@ class PatientController extends Controller
     public function index()
     {
         // Ambil semua user dengan role 'pasien' + relasi detail pasien
-        $patients = User::where('role', 'pasien')
+        $patients = User::where('role', 'patient')
             ->with('patient')
             ->get();
 
@@ -55,7 +55,7 @@ class PatientController extends Controller
                 'name'     => $request->name,
                 'email'    => $request->email,
                 'password' => Hash::make($request->password),
-                'role'     => 'pasien',
+                'role'     => 'patient',
             ]);
 
             // 2. Buat detail pasien (no_rm + biodata)
@@ -81,7 +81,7 @@ class PatientController extends Controller
     {
         // Cari user dengan role = pasien, jika tidak ketemu => 404
         $patient = User::with('patient')
-            ->where('role', 'pasien')
+            ->where('role', 'patient')
             ->findOrFail($id);
 
         return view('admin.patients.edit', compact('patient'));
@@ -93,7 +93,7 @@ class PatientController extends Controller
     public function update(Request $request, $id)
     {
         $patient = User::with('patient')
-            ->where('role', 'pasien')
+            ->where('role', 'patient')
             ->findOrFail($id);
 
         $request->validate([
@@ -150,7 +150,7 @@ class PatientController extends Controller
      */
     public function destroy($id)
     {
-        $patient = User::where('role', 'pasien')->findOrFail($id);
+        $patient = User::where('role', 'patient')->findOrFail($id);
 
         DB::transaction(function () use ($patient) {
             // hapus detail pasien dulu (jika FK belum cascade)

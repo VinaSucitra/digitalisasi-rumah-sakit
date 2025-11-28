@@ -68,6 +68,7 @@ class ScheduleController extends Controller
 
         Schedule::create($validated);
 
+        // Tambahkan pesan sukses setelah data berhasil disimpan
         return redirect()
             ->route('admin.schedules.index')
             ->with('success', 'Jadwal Dokter berhasil ditambahkan.');

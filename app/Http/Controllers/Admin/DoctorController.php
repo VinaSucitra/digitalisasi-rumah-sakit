@@ -56,7 +56,7 @@ class DoctorController extends Controller
                 'name'     => $request->name,
                 'email'    => $request->email,
                 'password' => Hash::make($request->password),
-                'role'     => 'dokter',
+                'role'     => 'doctor',
             ]);
 
             // 2. Buat detail dokter
@@ -80,7 +80,7 @@ class DoctorController extends Controller
     public function edit(User $doctor)
     {
         // Pastikan benar-benar user dengan role dokter
-        if ($doctor->role !== 'dokter') {
+        if ($doctor->role !== 'doctor') {
             abort(403, 'Akses ditolak. Pengguna ini bukan Dokter.');
         }
 
@@ -95,7 +95,7 @@ class DoctorController extends Controller
      */
     public function update(Request $request, User $doctor)
     {
-        if ($doctor->role !== 'dokter') {
+        if ($doctor->role !== 'doctor') {
             return redirect()
                 ->route('admin.doctors.index')
                 ->with('error', 'Gagal memperbarui: Pengguna ini bukan Dokter.');
@@ -149,7 +149,7 @@ class DoctorController extends Controller
      */
     public function destroy(User $doctor)
     {
-        if ($doctor->role !== 'dokter') {
+        if ($doctor->role !== 'doctor') {
             return redirect()
                 ->route('admin.doctors.index')
                 ->with('error', 'Gagal menghapus: Pengguna ini bukan Dokter.');

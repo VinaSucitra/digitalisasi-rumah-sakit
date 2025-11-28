@@ -3,116 +3,110 @@
 namespace App\Http\Controllers\Patient;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+
 use App\Models\Appointment;
 use App\Models\Poli;
 use App\Models\DoctorDetail;
 use App\Models\Schedule;
-use App\Models\Patient;
-use Illuminate\Support\Facades\DB;
 
 class AppointmentController extends Controller
 {
     /**
-     * List janji temu pasien
+     * List semua janji temu milik pasien yang login.
      */
     public function index()
     {
-        $patient = auth()->user()->patient;
+        $patient = Auth::user()->patient;
+
+        if (!$patient) {
+            abort(403, 'Akun ini tidak terdaftar sebagai pasien.');
+        }
 
         $appointments = Appointment::where('patient_id', $patient->id)
-                        ->with(['doctor.user', 'schedule', 'doctor.poli'])
-                        ->latest()
-                        ->get();
+            ->with(['doctor.user', 'doctor.poli', 'schedule'])
+            ->latest('booking_date')
+            ->paginate(10);
 
         return view('patient.appointments.index', compact('appointments'));
     }
 
-
     /**
-     * Step 1: Pilih Poli
+     * Form buat janji temu baru.
+     * (Pilih Poli, Dokter, Jadwal, Tanggal, Keluhan)
      */
     public function create()
     {
+        $patient = Auth::user()->patient;
+
+        if (!$patient) {
+            abort(403, 'Akun ini tidak terdaftar sebagai pasien.');
+        }
+
+        // Semua poli
         $polis = Poli::all();
 
-        return view('patient.appointments.create_poli', compact('polis'));
+        // Detail dokter + relasi user & poli
+        $doctors = DoctorDetail::with(['user', 'poli'])
+            ->whereNotNull('poli_id')   // hanya dokter yang sudah punya poli
+            ->get();
+
+        // Semua jadwal praktik, tampilkan di dropdown
+        $schedules = Schedule::with(['doctor.user', 'doctor.poli'])
+            ->orderBy('day_of_week')
+            ->orderBy('start_time')
+            ->get();
+
+        return view('patient.appointments.create', compact(
+            'patient',
+            'polis',
+            'doctors',
+            'schedules'
+        ));
     }
 
-
     /**
-     * Step 2: Pilih Dokter berdasarkan Poli
-     */
-    public function selectDoctor($poli_id)
-    {
-        $poli = Poli::findOrFail($poli_id);
-
-        $doctors = DoctorDetail::where('poli_id', $poli_id)
-                    ->with('user')
-                    ->get();
-
-        return view('patient.appointments.select_doctor', compact('poli', 'doctors'));
-    }
-
-
-    /**
-     * Step 3: Pilih Jadwal Dokter
-     */
-    public function selectSchedule($doctor_id)
-    {
-        $doctor = DoctorDetail::findOrFail($doctor_id);
-
-        $schedules = Schedule::where('doctor_id', $doctor_id)
-                        ->orderBy('day_of_week')
-                        ->orderBy('start_time')
-                        ->get();
-
-        return view('patient.appointments.select_schedule', compact('doctor', 'schedules'));
-    }
-
-
-    /**
-     * Step 4: Simpan Janji Temu
+     * Simpan janji temu baru.
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'schedule_id' => 'required|exists:schedules,id',
+        $patient = Auth::user()->patient;
+
+        if (!$patient) {
+            abort(403, 'Akun ini tidak terdaftar sebagai pasien.');
+        }
+
+        $validated = $request->validate([
+            'poli_id'      => 'required|exists:polis,id',
+            'doctor_id'    => 'required|exists:doctor_details,id',
+            'schedule_id'  => 'required|exists:schedules,id',
             'booking_date' => 'required|date|after_or_equal:today',
-            'complaint' => 'required|string|max:255',
+            'complaint'    => 'required|string|max:500',
         ]);
 
-        $patient = auth()->user()->patient;
-        $schedule = Schedule::findOrFail($request->schedule_id);
+        $validated['patient_id'] = $patient->id;
+        $validated['status']     = 'pending';
 
-        DB::transaction(function () use ($request, $patient, $schedule) {
-
-            Appointment::create([
-                'patient_id'   => $patient->id,
-                'doctor_id'    => $schedule->doctor_id,
-                'schedule_id'  => $schedule->id,
-                'booking_date' => $request->booking_date,
-                'complaint'    => $request->complaint,
-                'status'       => 'pending',
-            ]);
-        });
+        Appointment::create($validated);
 
         return redirect()
-                ->route('patient.appointments.index')
-                ->with('success', 'Janji temu berhasil dibuat! Harap menunggu persetujuan dokter.');
+            ->route('patient.appointments.index')
+            ->with('success', 'Janji temu berhasil dibuat dan menunggu persetujuan.');
     }
 
-
     /**
-     * Detail Janji Temu
+     * Detail satu janji temu.
      */
     public function show(Appointment $appointment)
     {
-        if ($appointment->patient_id !== auth()->user()->patient->id) {
-            abort(403);
+        $patient = Auth::user()->patient;
+
+        if (!$patient || $appointment->patient_id !== $patient->id) {
+            abort(403, 'Anda tidak berhak melihat janji temu ini.');
         }
 
-        $appointment->load(['doctor.user', 'schedule', 'doctor.poli']);
+        $appointment->load(['doctor.user', 'doctor.poli', 'schedule']);
 
         return view('patient.appointments.show', compact('appointment'));
     }

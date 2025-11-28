@@ -1,59 +1,45 @@
 @extends('layouts.patient')
 
+@section('title', 'Detail Rekam Medis')
+@section('page_title', 'Detail Rekam Medis')
+
 @section('content')
-<div class="container">
+    <div class="bg-white shadow-xl rounded-xl p-6 md:p-8 max-w-3xl">
+        <h2 class="text-2xl font-bold text-gray-800 mb-1">Detail Rekam Medis</h2>
+        <p class="text-gray-600 mb-6">Informasi lengkap mengenai pemeriksaan Anda.</p>
 
-    <h2 class="mb-4">Detail Rekam Medis</h2>
-
-    <div class="card mb-3">
-        <div class="card-body">
-
-            <h5>Data Pemeriksaan</h5>
-
-            <p>
-                <strong>Dokter:</strong> {{ $medical_record->doctor->user->name }} <br>
-                <strong>Poli:</strong> {{ $medical_record->doctor->poli->name }} <br>
-                <strong>Tanggal Periksa:</strong> {{ $medical_record->visit_date }} <br>
-                <strong>Keluhan:</strong> {{ $medical_record->appointment->complaint }}
-            </p>
-
-            <hr>
-
-            <h5>Diagnosis:</h5>
-            <p>{{ $medical_record->diagnosis }}</p>
-
-            <h5>Tindakan:</h5>
-            <p>{{ $medical_record->treatment ?? '-' }}</p>
-
-            <h5>Catatan:</h5>
-            <p>{{ $medical_record->notes ?? '-' }}</p>
-
-            <hr>
-
-            <h4>Resep Obat</h4>
-
-            @foreach ($medical_record->prescriptions as $rx)
-                <div class="card mb-3">
-                    <div class="card-body">
-
-                        <strong>Status Resep:</strong> {{ $rx->status }} <br>
-
-                        <ul>
-                            @foreach ($rx->items as $item)
-                            <li>
-                                <strong>{{ $item->medicine->name }}</strong> <br>
-                                Jumlah: {{ $item->quantity }} <br>
-                                Aturan Pakai: <em>{{ $item->dosage }}</em>
-                            </li>
-                            @endforeach
-                        </ul>
-
-                    </div>
-                </div>
-            @endforeach
-
+        <div class="mb-4">
+            <strong>Tanggal Pemeriksaan:</strong> {{ $medicalRecord->visit_date }}
         </div>
-    </div>
 
-</div>
+        <div class="mb-4">
+            <strong>Dokter:</strong> {{ $medicalRecord->doctor->user->name }}
+        </div>
+
+        <div class="mb-4">
+            <strong>Poli/Klinik:</strong> {{ $medicalRecord->doctor->poli->name }}
+        </div>
+
+        <div class="mb-4">
+            <strong>Resep:</strong>
+            @if($medicalRecord->prescriptions->count() > 0)
+                <ul>
+                    @foreach($medicalRecord->prescriptions as $prescription)
+                        <li>
+                            <strong>{{ $prescription->name }}</strong>
+                            <ul>
+                                @foreach($prescription->items as $item)
+                                    <li>{{ $item->medicine->name }} - {{ $item->quantity }} pcs</li>
+                                @endforeach
+                            </ul>
+                        </li>
+                    @endforeach
+                </ul>
+            @else
+                <span class="text-red-500">Tidak ada resep untuk pemeriksaan ini.</span>
+            @endif
+        </div>
+
+        <a href="{{ route('patient.medical_records.index') }}" class="text-teal-500 hover:text-teal-700">Kembali ke Daftar Rekam Medis</a>
+    </div>
 @endsection
