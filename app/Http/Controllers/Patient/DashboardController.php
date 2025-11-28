@@ -12,22 +12,37 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        $patient = Auth::user()->patient;
+        $user    = Auth::user();
+        $patient = $user->patient;
 
-        // 1. Ambil janji temu terbaru
+        // Kalau user belum punya profil pasien
+        if (!$patient) {
+            abort(403, 'Akun ini tidak terdaftar sebagai pasien.');
+        }
+
+        // 1. Janji temu pending (untuk kartu atas)
+        $pendingAppointments = Appointment::where('patient_id', $patient->id)
+            ->where('status', 'pending')
+            ->count();
+
+        // 2. Total rekam medis (untuk kartu atas)
+        $totalRecords = MedicalRecord::where('patient_id', $patient->id)->count();
+
+        // 3. Janji temu approved terakhir
         $latestAppointment = Appointment::where('patient_id', $patient->id)
+            ->where('status', 'approved')
             ->with(['doctor.user', 'schedule', 'doctor.poli'])
             ->latest('booking_date')
             ->first();
 
-        // 2. Ambil janji temu yang sudah disetujui (notifikasi)
+        // 4. Janji temu approved ke depan (notifikasi)
         $approvedAppointments = Appointment::where('patient_id', $patient->id)
             ->where('status', 'approved')
             ->whereDate('booking_date', '>=', Carbon::now()->toDateString())
             ->with(['doctor.user', 'schedule'])
             ->get();
 
-        // 3. Resep siap diambil (jika ada fitur farmasi)
+        // 5. Resep siap diambil (jika fitur farmasi aktif)
         $readyPrescriptions = MedicalRecord::where('patient_id', $patient->id)
             ->whereHas('prescriptions', function ($query) {
                 $query->where('status', 'ready');
@@ -35,13 +50,15 @@ class DashboardController extends Controller
             ->with('prescriptions.items.medicine')
             ->get();
 
-        // 4. Riwayat rekam medis singkat
+        // 6. Riwayat rekam medis singkat
         $latestRecords = MedicalRecord::where('patient_id', $patient->id)
             ->latest('visit_date')
             ->limit(5)
             ->get();
 
         return view('patient.dashboard', compact(
+            'pendingAppointments',
+            'totalRecords',
             'latestAppointment',
             'approvedAppointments',
             'readyPrescriptions',

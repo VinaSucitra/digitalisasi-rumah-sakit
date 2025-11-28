@@ -29,6 +29,7 @@ use App\Http\Controllers\Patient\AppointmentController as PatientAppointment;
 use App\Http\Controllers\Patient\MedicalRecordController as PatientRecord;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\Patient\DoctorScheduleController;
 
 /*
 |--------------------------------------------------------------------------|
@@ -119,6 +120,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/dashboard', [PatientDashboard::class, 'index'])->name('dashboard');
         Route::resource('appointments', PatientAppointment::class)->only(['index', 'create', 'store', 'show']);
         Route::resource('medical_records', PatientRecord::class)->only(['index', 'show']);
+        Route::resource('doctor_schedules', DoctorScheduleController::class)->only(['index', 'show']);
     });
 
 });

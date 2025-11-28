@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-use App\Models\DoctorDetail; // <-- Tetap diperlukan untuk Dokter
-use App\Models\Patient; // <-- GANTI DARI PatientDetail menjadi Model Patient
+use App\Models\DoctorDetail;
+use App\Models\Patient;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash; 
 
@@ -12,10 +12,18 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        // ... (Buat Admin)
+        // ---------------------------------------------------------------- //
+        // 1. ADMIN USER (BARU DITAMBAHKAN)
+        // ---------------------------------------------------------------- //
+        User::create([
+            'name' => 'Admin Utama',
+            'email' => 'admin@hospital.com',
+            'password' => Hash::make('admin123'), // PASSWORD: admin123
+            'role' => 'admin',
+        ]);
 
         // ---------------------------------------------------------------- //
-        // DOCTOR
+        // 2. DOCTOR
         // ---------------------------------------------------------------- //
         $doctorUser = User::create([
             'name' => 'Dr. John',
@@ -24,7 +32,6 @@ class UserSeeder extends Seeder
             'role' => 'doctor',
         ]);
         
-        // 🔥 Tambahkan detail dokter (Mengatasi Error 403 Dokter)
         DoctorDetail::create([
             'user_id' => $doctorUser->id,
             'poli_id' => 1, 
@@ -34,7 +41,7 @@ class UserSeeder extends Seeder
 
 
         // ---------------------------------------------------------------- //
-        // PATIENT: Simpan User, lalu buat entri di tabel 'patients'
+        // 3. PATIENT
         // ---------------------------------------------------------------- //
         $patientUser = User::create([
             'name' => 'Patient User',
@@ -43,12 +50,11 @@ class UserSeeder extends Seeder
             'role' => 'patient',
         ]);
 
-        // 🔥 Tambahkan entri di tabel 'patients' dan sediakan 'no_rm'
         Patient::create([
             'user_id' => $patientUser->id,
             'address' => 'Jl. Kesehatan No. 10',
             'phone' => '08123456789',
-            'no_rm' => 'RM-0001', // Wajib: Mengatasi error 'no_rm'
+            'no_rm' => 'RM-0001',
         ]);
     }
 }

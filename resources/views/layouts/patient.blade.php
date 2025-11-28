@@ -1,122 +1,128 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="id">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta charset="UTF-8">
+    <title>@yield('title', 'Patient Portal')</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>{{ config('app.name', 'Laravel') }} | @yield('title', 'Patient Portal')</title>
+    {{-- Tailwind CDN --}}
+    <script src="https://cdn.tailwindcss.com"></script>
 
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=inter:400,600,700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
-
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    {{-- Icon --}}
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
-<body class="font-sans antialiased bg-gray-50">
-    <div class="flex h-screen overflow-hidden">
+<body class="min-h-screen bg-teal-50 flex">
 
-        {{-- SIDEBAR KIRI: Teal-800 / Emerald-400 (Panel Pasien - Disesuaikan dengan tema Dokter) --}}
-        <div id="sidebar" class="flex-shrink-0 w-64 bg-teal-800 text-white shadow-xl overflow-y-auto transition-all duration-300 ease-in-out z-30">
-            <div class="p-6">
-                <h1 class="text-2xl font-extrabold text-emerald-400 uppercase tracking-widest">
-                    RS PORTAL
-                </h1>
-                <p class="text-xs text-teal-400 mt-1">Halaman Pasien</p>
+    {{-- ========== SIDEBAR PASIEN ========== --}}
+    <aside class="w-64 bg-teal-900 text-teal-50 flex flex-col shadow-xl">
+        <div class="px-5 py-4 border-b border-teal-700">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-teal-600 flex items-center justify-center">
+                    <i class="fas fa-user-injured text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-teal-200">Patient Panel</p>
+                    <h1 class="font-bold text-lg leading-tight">RS PORTAL</h1>
+                </div>
             </div>
-
-            <nav class="mt-2 space-y-1 px-4">
-                {{-- Kategori: Dashboard --}}
-                <a href="{{ route('patient.dashboard') }}"
-                   class="flex items-center p-3 rounded-lg transition duration-150 ease-in-out
-                   {{ request()->routeIs('patient.dashboard') ? 'bg-teal-700 font-semibold shadow-md' : 'text-teal-300 hover:bg-teal-700 hover:text-white' }}">
-                    <i class="fas fa-home w-5 h-5 mr-3"></i>
-                    Dashboard
-                </a>
-
-                <div class="mt-4 pt-4 border-t border-teal-700">
-                    <p class="text-xs uppercase text-teal-500 font-bold mb-2 tracking-wider">Layanan</p>
-                </div>
-
-                {{-- Kategori: Layanan --}}
-                <a href="{{ route('patient.appointments.index') ?? '#' }}"
-                   class="flex items-center p-3 rounded-lg transition duration-150 ease-in-out
-                   {{ request()->routeIs('patient.appointments.*') ? 'bg-teal-700 font-semibold shadow-md' : 'text-teal-300 hover:bg-teal-700 hover:text-white' }}">
-                    <i class="fas fa-calendar-plus w-5 h-5 mr-3"></i>
-                    Buat Janji Temu
-                </a>
-
-                <a href="{{ route('patient.medical_records.index') ?? '#' }}"
-                   class="flex items-center p-3 rounded-lg transition duration-150 ease-in-out
-                   {{ request()->routeIs('patient.medical_records.*') ? 'bg-teal-700 font-semibold shadow-md' : 'text-teal-300 hover:bg-teal-700 hover:text-white' }}">
-                    <i class="fas fa-history w-5 h-5 mr-3"></i>
-                    Riwayat Pemeriksaan
-                </a>
-                
-                {{-- Tambahan --}}
-                <div class="mt-4 pt-4 border-t border-teal-700">
-                    <p class="text-xs uppercase text-teal-500 font-bold mb-2 tracking-wider">Informasi</p>
-                </div>
-
-                <a href="{{ route('patient.doctor_schedules.index') ?? '#' }}"
-                   class="flex items-center p-3 rounded-lg transition duration-150 ease-in-out
-                   {{ request()->routeIs('patient.doctor_schedules.index') ? 'bg-teal-700 font-semibold shadow-md' : 'text-teal-300 hover:bg-teal-700 hover:text-white' }}">
-                    <i class="fas fa-user-md w-5 h-5 mr-3"></i>
-                    Jadwal Dokter
-                </a>
-            </nav>
         </div>
 
-        {{-- Konten Utama (Header + Main) --}}
-        <div class="flex flex-col flex-1 overflow-x-hidden overflow-y-auto">
+        {{-- MENU --}}
+        <nav class="flex-1 px-3 py-4 space-y-1 text-sm">
+            {{-- DASHBOARD --}}
+            <p class="px-3 text-[11px] font-semibold tracking-wide text-teal-400 uppercase mb-1">
+                Dashboard
+            </p>
+            <a href="{{ route('patient.dashboard') }}"
+               class="flex items-center gap-3 px-3 py-2 rounded-lg
+                      {{ request()->routeIs('patient.dashboard') ? 'bg-teal-700 text-white' : 'hover:bg-teal-800/70 text-teal-100' }}">
+                <i class="fas fa-home w-5"></i>
+                <span>Dashboard</span>
+            </a>
 
-            {{-- TOPBAR ATAS --}}
-            <header class="flex-shrink-0 bg-white border-b border-teal-200 shadow-sm">
-                <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
-                    <div class="flex justify-end h-16">
-                        <div class="flex items-center">
-                            {{-- Dropdown Profile/Logout --}}
-                            <div class="ml-4 flex items-center md:ml-6 relative" x-data="{ open: false }">
-                                <button @click="open = !open" type="button" class="max-w-xs flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500" id="user-menu-button" aria-expanded="false" aria-haspopup="true">
-                                    <span class="sr-only">Open user menu</span>
-                                    <span class="font-semibold text-gray-700 mr-2">{{ Auth::user()->name ?? 'Pasien' }}</span>
-                                    {{-- Menggunakan warna teal pada placeholder --}}
-                                    <img class="h-8 w-8 rounded-full bg-gray-200 p-1" src="https://placehold.co/32x32/teal500/white?text=P" alt="Patient Profile">
-                                </button>
+            {{-- LAYANAN --}}
+            <p class="px-3 text-[11px] font-semibold tracking-wide text-teal-400 uppercase mt-4 mb-1">
+                Layanan
+            </p>
+            {{-- Buat Janji Temu --}}
+            <a href="{{ route('patient.appointments.create') }}"
+               class="flex items-center gap-3 px-3 py-2 rounded-lg
+                      {{ request()->is('patient/appointments/create') ? 'bg-teal-700 text-white' : 'hover:bg-teal-800/70 text-teal-100' }}">
+                <i class="fas fa-calendar-plus w-5"></i>
+                <span>Buat Janji Temu</span>
+            </a>
 
-                                <div x-show="open" @click.away="open = false"
-                                    x-transition:enter="transition ease-out duration-100"
-                                    x-transition:enter-start="transform opacity-0 scale-95"
-                                    x-transition:enter-end="transform opacity-100 scale-100"
-                                    x-transition:leave="transition ease-in duration-75"
-                                    x-transition:leave-start="transform opacity-100 scale-100"
-                                    x-transition:leave-end="transform opacity-0 scale-95"
-                                    class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-40" role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button" tabindex="-1">
+            {{-- Daftar Janji Temu Saya --}}
+            <a href="{{ route('patient.appointments.index') }}"
+               class="flex items-center gap-3 px-3 py-2 rounded-lg
+                      {{ request()->is('patient/appointments') ? 'bg-teal-700 text-white' : 'hover:bg-teal-800/70 text-teal-100' }}">
+                <i class="fas fa-calendar-check w-5"></i>
+                <span>Janji Temu Saya</span>
+            </a>
 
-                                    <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1">
-                                        Profil
-                                    </a>
+            {{-- Riwayat Pemeriksaan --}}
+            <a href="{{ route('patient.medical_records.index') }}"
+               class="flex items-center gap-3 px-3 py-2 rounded-lg
+                      {{ request()->is('patient/medical_records*') ? 'bg-teal-700 text-white' : 'hover:bg-teal-800/70 text-teal-100' }}">
+                <i class="fas fa-file-medical-alt w-5"></i>
+                <span>Riwayat Pemeriksaan</span>
+            </a>
 
-                                    <form method="POST" action="{{ route('logout') }}">
-                                        @csrf
-                                        <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-teal-100 hover:text-teal-700" role="menuitem" tabindex="-1">
-                                            Log Out
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+            {{-- INFORMASI --}}
+            <p class="px-3 text-[11px] font-semibold tracking-wide text-teal-400 uppercase mt-4 mb-1">
+                Informasi
+            </p>
+            {{-- Jadwal Dokter --}}
+            @if(Route::has('patient.doctor_schedules.index'))
+                <a href="{{ route('patient.doctor_schedules.index') }}"
+                   class="flex items-center gap-3 px-3 py-2 rounded-lg
+                          {{ request()->is('patient/doctor_schedules*') ? 'bg-teal-700 text-white' : 'hover:bg-teal-800/70 text-teal-100' }}">
+                    <i class="fas fa-user-md w-5"></i>
+                    <span>Jadwal Dokter</span>
+                </a>
+            @endif
+        </nav>
+
+        {{-- FOOTER USER --}}
+        <div class="border-t border-teal-800 px-4 py-3 flex items-center justify-between text-xs">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-full bg-teal-700 flex items-center justify-center">
+                    <i class="fas fa-user text-teal-50 text-sm"></i>
                 </div>
-            </header>
-
-            {{-- Main Content Slot --}}
-            <main class="flex-1 p-6">
-                @yield('content')
-            </main>
-
+                <div>
+                    <p class="font-semibold">
+                        {{ auth()->user()->name ?? 'Pasien' }}
+                    </p>
+                    <p class="text-teal-300 text-[11px]">
+                        {{ auth()->user()->email ?? '' }}
+                    </p>
+                </div>
+            </div>
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button type="submit"
+                        class="text-teal-200 hover:text-white hover:bg-teal-700 rounded-full p-2 transition">
+                    <i class="fas fa-right-from-bracket"></i>
+                </button>
+            </form>
         </div>
-    </div>
+    </aside>
+
+    {{-- ========== MAIN CONTENT PASIEN ========== --}}
+    <main class="flex-1 flex flex-col">
+        {{-- Top bar --}}
+        <header class="h-14 flex items-center justify-between px-6 border-b bg-white/70 backdrop-blur">
+            <div class="flex items-center gap-2 text-sm text-teal-900">
+                <i class="fas fa-gauge-high"></i>
+                <span>@yield('page_title', 'Dashboard Pasien')</span>
+            </div>
+        </header>
+
+        <section class="flex-1 p-4 md:p-6 lg:p-8 bg-teal-50">
+            @yield('content')
+        </section>
+    </main>
+
 </body>
 </html>
