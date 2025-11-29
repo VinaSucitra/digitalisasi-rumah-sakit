@@ -27,4 +27,17 @@ class Schedule extends Model
     {
         return $this->hasMany(Appointment::class);
     }
+
+    // Pastikan end_time lebih besar dari start_time
+    public static function boot()
+    {
+        parent::boot();
+
+        static::saving(function ($schedule) {
+            // Periksa apakah end_time lebih besar dari start_time
+            if ($schedule->start_time >= $schedule->end_time) {
+                throw new \Exception('Jam selesai harus lebih besar dari jam mulai.');
+            }
+        });
+    }
 }

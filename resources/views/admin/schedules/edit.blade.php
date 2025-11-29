@@ -12,7 +12,7 @@
         </div>
 
         <a href="{{ route('admin.schedules.index') }}"
-           class="px-4 py-2 bg-gray-300 text-gray-700 font-semibold rounded-lg shadow-md hover:bg-gray-400 transition duration-200">
+            class="px-4 py-2 bg-gray-300 text-gray-700 font-semibold rounded-lg shadow-md hover:bg-gray-400 transition duration-200">
             Kembali ke Daftar
         </a>
     </div>
@@ -28,10 +28,10 @@
                     Dokter
                 </label>
                 <select name="doctor_id" id="doctor_id" required
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-emerald-500 focus:border-emerald-500 @error('doctor_id') border-red-500 @enderror">
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-emerald-500 focus:border-emerald-500 @error('doctor_id') border-red-500 @enderror">
                     @foreach ($doctors as $doctor)
                         <option value="{{ $doctor->id }}"
-                                {{ old('doctor_id', $schedule->doctor_id) == $doctor->id ? 'selected' : '' }}>
+                            {{ old('doctor_id', $schedule->doctor_id) == $doctor->id ? 'selected' : '' }}>
                             {{ $doctor->user->name ?? 'Dokter Tanpa Nama' }}
                             ({{ $doctor->poli->name ?? $doctor->poli->nama_poli ?? 'Poli tidak diketahui' }})
                         </option>
@@ -44,22 +44,22 @@
 
             {{-- Hari --}}
             <div class="mb-4">
-                <label for="day" class="block text-sm font-medium text-gray-700 mb-1">
+                <label for="day_of_week" class="block text-sm font-medium text-gray-700 mb-1">
                     Hari Praktik
                 </label>
-                <select name="day" id="day" required
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-emerald-500 focus:border-emerald-500 @error('day') border-red-500 @enderror">
+                <select name="day_of_week" id="day_of_week" required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-emerald-500 focus:border-emerald-500 @error('day_of_week') border-red-500 @enderror">
                     @php
                         $days = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu'];
                     @endphp
-                    @foreach ($days as $day)
-                        <option value="{{ strtolower($day) }}"
-                                {{ old('day', $schedule->day ?? $schedule->day_of_week) == strtolower($day) ? 'selected' : '' }}>
-                            {{ $day }}
+                    @foreach ($days as $day_name)
+                        <option value="{{ strtolower($day_name) }}"
+                            {{ old('day_of_week', $schedule->day_of_week) == strtolower($day_name) ? 'selected' : '' }}>
+                            {{ $day_name }}
                         </option>
                     @endforeach
                 </select>
-                @error('day')
+                @error('day_of_week')
                 <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                 @enderror
             </div>
@@ -71,8 +71,8 @@
                         Jam Mulai Praktik
                     </label>
                     <input type="time" name="start_time" id="start_time"
-                           value="{{ old('start_time', $schedule->start_time) }}" required
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-emerald-500 focus:border-emerald-500 @error('start_time') border-red-500 @enderror">
+                            value="{{ old('start_time', $schedule->start_time) }}" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-emerald-500 focus:border-emerald-500 @error('start_time') border-red-500 @enderror">
                     @error('start_time')
                     <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                     @enderror
@@ -84,8 +84,8 @@
                         Jam Selesai Praktik
                     </label>
                     <input type="time" name="end_time" id="end_time"
-                           value="{{ old('end_time', $schedule->end_time) }}" required
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-emerald-500 focus:border-emerald-500 @error('end_time') border-red-500 @enderror">
+                            value="{{ old('end_time', $schedule->end_time) }}" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-emerald-500 focus:border-emerald-500 @error('end_time') border-red-500 @enderror">
                     @error('end_time')
                     <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                     @enderror

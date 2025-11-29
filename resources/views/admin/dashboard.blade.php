@@ -32,8 +32,9 @@
                 <p class="text-xs font-semibold text-teal-700 uppercase tracking-wide">
                     Janji Temu Pending
                 </p>
+                {{-- Variabel yang benar: $pendingAppointments --}}
                 <p class="mt-2 text-3xl font-extrabold text-teal-900">
-                    {{ $pendingAppointments ?? $pendingCount ?? 0 }}
+                    {{ $pendingAppointments ?? 0 }}
                 </p>
                 <p class="mt-1 text-[11px] text-gray-500">
                     Menunggu verifikasi Admin / Dokter.
@@ -52,8 +53,9 @@
                 <p class="text-xs font-semibold text-emerald-700 uppercase tracking-wide">
                     Total Dokter
                 </p>
+                {{-- 🔥 PERBAIKAN: Menggunakan $totalDoctor --}}
                 <p class="mt-2 text-3xl font-extrabold text-emerald-900">
-                    {{ $totalDoctors ?? 0 }}
+                    {{ $totalDoctor ?? 0 }} 
                 </p>
                 <p class="mt-1 text-[11px] text-gray-500">
                     Dokter yang terdaftar di sistem.
@@ -72,8 +74,9 @@
                 <p class="text-xs font-semibold text-sky-700 uppercase tracking-wide">
                     Total Pasien
                 </p>
+                {{-- 🔥 PERBAIKAN: Menggunakan $totalPatient --}}
                 <p class="mt-2 text-3xl font-extrabold text-sky-900">
-                    {{ $totalPatients ?? 0 }}
+                    {{ $totalPatient ?? 0 }} 
                 </p>
                 <p class="mt-1 text-[11px] text-gray-500">
                     Akun pasien yang sudah terdaftar.
@@ -92,8 +95,9 @@
                 <p class="text-xs font-semibold text-rose-700 uppercase tracking-wide">
                     Total Obat & Tindakan
                 </p>
+                {{-- Variabel yang benar: $totalMedicines --}}
                 <p class="mt-2 text-3xl font-extrabold text-rose-900">
-                    {{ $totalMedicines ?? $totalObat ?? 0 }}
+                    {{ $totalMedicines ?? 0 }}
                 </p>
                 <p class="mt-1 text-[11px] text-gray-500">
                     Item obat & tindakan medis yang tersedia.
@@ -124,13 +128,6 @@
                 </a>
             </div>
 
-            @php
-                $recentAppointments = $recentAppointments
-                    ?? $latestAppointments
-                    ?? $appointmentsToday
-                    ?? collect();
-            @endphp
-
             @if($recentAppointments->isEmpty())
                 <p class="text-xs text-gray-500">Belum ada janji temu yang tercatat.</p>
             @else
@@ -155,19 +152,19 @@
                                         {{ $app->doctor->user->name ?? '-' }}
                                     </td>
                                     <td class="py-2">
-                                        {{ $app->doctor->poli->name ?? $app->poli->name ?? '-' }}
+                                        {{ $app->doctor->poli->name ?? '-' }} {{-- Menggunakan relasi langsung $app->doctor->poli->name --}}
                                     </td>
                                     <td class="py-2">
-                                        {{ \Illuminate\Support\Carbon::parse($app->booking_date ?? $app->appointment_date)->format('d M Y') }}
+                                        {{ \Illuminate\Support\Carbon::parse($app->booking_date)->format('d M Y') }}
                                     </td>
                                     <td class="py-2">
                                         @php
-                                            $status = $app->status ?? 'pending';
+                                            $status = $app->status;
                                             $color = match($status) {
                                                 'approved','confirmed' => 'bg-emerald-100 text-emerald-700',
                                                 'rejected','cancelled' => 'bg-rose-100 text-rose-700',
-                                                'done','completed'    => 'bg-sky-100 text-sky-700',
-                                                default               => 'bg-amber-100 text-amber-700',
+                                                'done','completed'     => 'bg-sky-100 text-sky-700',
+                                                default                => 'bg-amber-100 text-amber-700', // pending
                                             };
                                         @endphp
                                         <span class="px-2 py-1 rounded-full text-[11px] font-semibold {{ $color }}">
@@ -189,28 +186,24 @@
                 Dokter yang Bertugas Hari Ini
             </h2>
 
-            @php
-                $todayDoctors = $todayDoctors ?? $doctorsToday ?? collect();
-            @endphp
-
-            @if($todayDoctors->isEmpty())
+            @if($doctorsToday->isEmpty()) {{-- Variabel sudah benar dari Controller --}}
                 <p class="text-xs text-gray-500">
                     Tidak ada dokter yang terjadwal praktik hari ini.
                 </p>
             @else
                 <ul class="space-y-2 text-xs">
-                    @foreach($todayDoctors as $doc)
+                    @foreach($doctorsToday as $schedule) {{-- Looping berdasarkan schedule --}}
                         <li class="flex items-start justify-between rounded-xl border border-gray-100 px-3 py-2 hover:bg-gray-50">
                             <div>
                                 <p class="font-semibold text-gray-800">
-                                    {{ $doc->user->name ?? '-' }}
+                                    {{ $schedule->doctor->user->name ?? '-' }}
                                 </p>
                                 <p class="text-[11px] text-gray-500">
-                                    Poli {{ $doc->poli->name ?? '-' }}
+                                    Poli {{ $schedule->doctor->poli->name ?? '-' }}
                                 </p>
                             </div>
                             <span class="text-[11px] text-emerald-600 font-semibold">
-                                Praktik
+                                {{ \Carbon\Carbon::parse($schedule->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($schedule->end_time)->format('H:i') }}
                             </span>
                         </li>
                     @endforeach

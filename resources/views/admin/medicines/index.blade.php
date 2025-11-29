@@ -117,6 +117,11 @@
                 </tbody>
             </table>
         </div>
+
+        {{-- Pagination --}}
+        <div class="px-6 py-4">
+            {{ $medicines->links() }}
+        </div>
     </div>
 </div>
 @endsection

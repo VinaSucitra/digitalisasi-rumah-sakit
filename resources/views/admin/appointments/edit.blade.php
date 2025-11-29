@@ -20,17 +20,17 @@
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
             <h1 class="text-2xl sm:text-3xl font-extrabold text-emerald-950">
-                Manajemen Janji Temu (Appointment)
+                Edit Janji Temu (Appointment)
             </h1>
             <p class="mt-1 text-sm text-emerald-900/70">
-                Kelola seluruh jadwal konsultasi antara pasien dan dokter di rumah sakit.
+                Perbarui detail janji temu.
             </p>
         </div>
 
-        <a href="{{ route('admin.appointments.create') }}"
-           class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-emerald-600 text-white text-sm font-semibold shadow-md shadow-emerald-900/20 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2">
-            <i class="fas fa-plus text-xs"></i>
-            Buat Janji Temu
+        <a href="{{ route('admin.appointments.index') }}"
+            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gray-300 text-gray-700 text-sm font-semibold shadow-md shadow-gray-900/20 hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
+            <i class="fas fa-arrow-left text-xs"></i>
+            Kembali ke Daftar
         </a>
     </div>
 
@@ -47,52 +47,64 @@
         <form action="{{ route('admin.appointments.update', $appointment->id) }}" method="POST">
             @csrf
             @method('PUT') {{-- Untuk mengupdate data menggunakan metode PUT --}}
-            <div class="px-6 sm:px-8 py-3 space-y-4">
+            <div class="px-6 sm:px-8 py-6 space-y-4">
+                
                 {{-- Tanggal & waktu --}}
-                <div>
-                    <label for="booking_date" class="block font-semibold">Tanggal dan Waktu</label>
-                    <input type="datetime-local" id="booking_date" name="booking_date" value="{{ $appointment->booking_date->format('Y-m-d\TH:i') }}" class="w-full p-2 rounded-md border border-emerald-300" required>
+                <div class="mb-4">
+                    <label for="booking_date" class="block font-semibold text-gray-700 mb-1">Tanggal dan Waktu</label>
+                    <input type="datetime-local" id="booking_date" name="booking_date" 
+                        value="{{ old('booking_date', $appointment->booking_date ? $appointment->booking_date->format('Y-m-d\TH:i') : '') }}" 
+                        class="w-full p-2 rounded-md border border-emerald-300 @error('booking_date') border-red-500 @enderror" required>
+                    @error('booking_date') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 {{-- Pasien --}}
-                <div>
-                    <label for="patient_id" class="block font-semibold">Pasien</label>
-                    <select name="patient_id" id="patient_id" class="w-full p-2 rounded-md border border-emerald-300" required>
+                <div class="mb-4">
+                    <label for="patient_id" class="block font-semibold text-gray-700 mb-1">Pasien</label>
+                    <select name="patient_id" id="patient_id" class="w-full p-2 rounded-md border border-emerald-300 @error('patient_id') border-red-500 @enderror" required>
                         @foreach($patients as $patient)
-                            <option value="{{ $patient->id }}" {{ $appointment->patient_id == $patient->id ? 'selected' : '' }}>
-                                {{ $patient->user->name }}
+                            <option value="{{ $patient->id }}" {{ old('patient_id', $appointment->patient_id) == $patient->id ? 'selected' : '' }}>
+                                {{ $patient->user->name ?? 'Pasien Tanpa Nama' }}
                             </option>
                         @endforeach
                     </select>
+                    @error('patient_id') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 {{-- Dokter --}}
-                <div>
-                    <label for="doctor_id" class="block font-semibold">Dokter</label>
-                    <select name="doctor_id" id="doctor_id" class="w-full p-2 rounded-md border border-emerald-300" required>
+                <div class="mb-4">
+                    <label for="doctor_id" class="block font-semibold text-gray-700 mb-1">Dokter</label>
+                    <select name="doctor_id" id="doctor_id" class="w-full p-2 rounded-md border border-emerald-300 @error('doctor_id') border-red-500 @enderror" required>
                         @foreach($doctors as $doctor)
-                            <option value="{{ $doctor->id }}" {{ $appointment->doctor_id == $doctor->id ? 'selected' : '' }}>
-                                {{ $doctor->user->name }}
+                            <option value="{{ $doctor->id }}" {{ old('doctor_id', $appointment->doctor_id) == $doctor->id ? 'selected' : '' }}>
+                                {{ $doctor->user->name ?? 'Dokter Tanpa Nama' }} ({{ $doctor->poli->name ?? 'Poli T/A' }})
                             </option>
                         @endforeach
                     </select>
+                    @error('doctor_id') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 {{-- Keluhan --}}
-                <div>
-                    <label for="complaint" class="block font-semibold">Keluhan</label>
-                    <textarea id="complaint" name="complaint" rows="3" class="w-full p-2 rounded-md border border-emerald-300" required>{{ $appointment->complaint }}</textarea>
+                <div class="mb-4">
+                    <label for="complaint" class="block font-semibold text-gray-700 mb-1">Keluhan</label>
+                    <textarea id="complaint" name="complaint" rows="3" class="w-full p-2 rounded-md border border-emerald-300 @error('complaint') border-red-500 @enderror" required>{{ old('complaint', $appointment->complaint) }}</textarea>
+                    @error('complaint') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 {{-- Status --}}
-                <div>
-                    <label for="status" class="block font-semibold">Status</label>
-                    <select name="status" id="status" class="w-full p-2 rounded-md border border-emerald-300">
-                        <option value="pending" {{ $appointment->status == 'pending' ? 'selected' : '' }}>Menunggu</option>
-                        <option value="approved" {{ $appointment->status == 'approved' ? 'selected' : '' }}>Disetujui</option>
-                        <option value="rejected" {{ $appointment->status == 'rejected' ? 'selected' : '' }}>Ditolak</option>
-                        <option value="done" {{ $appointment->status == 'done' ? 'selected' : '' }}>Selesai</option>
+                <div class="mb-6">
+                    <label for="status" class="block font-semibold text-gray-700 mb-1">Status</label>
+                    <select name="status" id="status" class="w-full p-2 rounded-md border border-emerald-300 @error('status') border-red-500 @enderror">
+                        @php
+                            $statuses = ['pending', 'approved', 'rejected', 'done'];
+                        @endphp
+                        @foreach ($statuses as $status)
+                            <option value="{{ $status }}" {{ old('status', $appointment->status) == $status ? 'selected' : '' }}>
+                                {{ ucfirst($status) }}
+                            </option>
+                        @endforeach
                     </select>
+                    @error('status') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 {{-- Tombol submit --}}

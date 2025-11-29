@@ -136,7 +136,8 @@ class MedicalRecordController extends Controller
             }
 
             // 3. Ubah status appointment jadi Selesai
-            $appointment->update(['status' => 'Selesai']);
+            // 🔥 PERBAIKAN DI SINI: Mengubah 'Selesai' menjadi 'Done'
+            $appointment->update(['status' => 'Done']);
         });
 
         return redirect()->route('doctor.medical_records.index')->with('success', 'Rekam medis berhasil disimpan.');
