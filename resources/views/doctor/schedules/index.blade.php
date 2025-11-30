@@ -1,18 +1,20 @@
-@extends('admin.layouts.app')
+@extends('layouts.doctor')
 
 @section('content')
 <div class="container mx-auto p-4 sm:p-6 lg:p-8">
 
-    {{-- Judul & deskripsi singkat (sama konsepnya dengan halaman Pasien) --}}
+    {{-- Header --}}
     <div class="flex justify-between items-center mb-6">
         <div>
-            <h2 class="text-3xl font-bold text-gray-800">Manajemen Jadwal Dokter</h2>
+            <p class="text-sm text-emerald-700 mb-1">Schedule Management</p>
+            <h2 class="text-3xl font-bold text-gray-800">Jadwal Praktik Saya</h2>
             <p class="text-sm text-gray-600 mt-1">
-                Kelola jadwal praktik dokter yang terdaftar di sistem rumah sakit.
+                Lihat dan kelola jadwal praktik Anda sendiri. Jadwal ini akan
+                digunakan pasien saat membuat janji temu.
             </p>
         </div>
 
-        <a href="{{ route('admin.schedules.create') }}"
+        <a href="{{ route('doctor.schedules.create') }}"
            class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg shadow-md hover:bg-indigo-700 transition duration-200">
             + Tambah Jadwal Baru
         </a>
@@ -27,7 +29,7 @@
         </div>
     @endif
 
-    {{-- Kartu utama (dibuat sama pola-nya dengan kartu "Daftar Pasien") --}}
+    {{-- Kartu utama --}}
     <div class="bg-white shadow-xl rounded-xl overflow-hidden">
 
         {{-- Header kartu --}}
@@ -35,11 +37,11 @@
             <div class="flex items-center space-x-2">
                 <span class="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
                 <h3 class="text-sm font-semibold text-gray-800">
-                    Daftar Jadwal Dokter
+                    Daftar Jadwal Praktik
                 </h3>
             </div>
             <span class="text-xs text-gray-500">
-                Total: {{ $schedules->total() }} jadwal
+                Total: {{ $schedules->count() }} jadwal
             </span>
         </div>
 
@@ -48,8 +50,6 @@
             <thead>
                 <tr class="bg-gray-50 text-xs text-gray-600 uppercase border-b">
                     <th class="px-6 py-3 text-left font-semibold">No.</th>
-                    <th class="px-6 py-3 text-left font-semibold">Dokter</th>
-                    <th class="px-6 py-3 text-left font-semibold">Poli</th>
                     <th class="px-6 py-3 text-left font-semibold">Hari</th>
                     <th class="px-6 py-3 text-left font-semibold">Jam Mulai</th>
                     <th class="px-6 py-3 text-left font-semibold">Jam Selesai</th>
@@ -59,24 +59,14 @@
             <tbody>
                 @forelse ($schedules as $schedule)
                     <tr class="border-b last:border-b-0 hover:bg-gray-50 transition">
-                        {{-- No. urut global (ikut pagination kalau ada) --}}
+                        {{-- No. urut --}}
                         <td class="px-6 py-3 text-gray-700">
-                            {{ $loop->iteration + ($schedules->currentPage() - 1) * $schedules->perPage() }}
-                        </td>
-
-                        {{-- Dokter --}}
-                        <td class="px-6 py-3 text-gray-800">
-                            {{ $schedule->doctor->user->name ?? '-' }}
-                        </td>
-
-                        {{-- Poli --}}
-                        <td class="px-6 py-3 text-gray-800">
-                            {{ $schedule->doctor->poli->name ?? $schedule->doctor->poli->nama_poli ?? '-' }}
+                            {{ $loop->iteration }}
                         </td>
 
                         {{-- Hari --}}
                         <td class="px-6 py-3 text-gray-800">
-                            {{ $schedule->day_of_week }}
+                            {{ $days[$schedule->day_of_week] ?? ucfirst($schedule->day_of_week) }}
                         </td>
 
                         {{-- Jam Mulai & Selesai --}}
@@ -90,12 +80,12 @@
                         {{-- Aksi --}}
                         <td class="px-6 py-3 text-gray-800">
                             <div class="flex items-center space-x-3">
-                                <a href="{{ route('admin.schedules.edit', $schedule->id) }}"
+                                <a href="{{ route('doctor.schedules.edit', $schedule->id) }}"
                                    class="text-emerald-600 hover:text-emerald-800 text-sm font-semibold">
                                     Edit
                                 </a>
 
-                                <form action="{{ route('admin.schedules.destroy', $schedule->id) }}"
+                                <form action="{{ route('doctor.schedules.destroy', $schedule->id) }}"
                                       method="POST"
                                       class="inline"
                                       onsubmit="return confirm('Apakah Anda yakin ingin menghapus jadwal ini?');">
@@ -111,26 +101,18 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7"
+                        <td colspan="5"
                             class="px-6 py-6 text-center text-sm text-gray-500">
-                            Belum ada jadwal dokter yang ditambahkan.
+                            Belum ada jadwal praktik yang ditambahkan.
                         </td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
-
-        {{-- Pagination kalau ada --}}
-        @if ($schedules->hasPages())
-            <div class="px-6 py-4 bg-gray-50 border-t">
-                {{ $schedules->links() }}
-            </div>
-        @endif
     </div>
 </div>
 
 <script>
-    // animasi hilang-notif sama seperti halaman lain
     document.addEventListener('DOMContentLoaded', () => {
         const successMessage = document.getElementById('success-message');
         if (successMessage) {

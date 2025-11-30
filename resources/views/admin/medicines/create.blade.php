@@ -1,86 +1,154 @@
 @extends('admin.layouts.app')
 
 @section('content')
-<div class="container mx-auto p-4 sm:p-6 lg:p-8">
-
-    <div class="flex justify-between items-center mb-6">
+<div class="container mx-auto px-4">
+    <div class="flex items-center justify-between mb-6">
         <div>
-            <h2 class="text-3xl font-bold text-gray-800">Tambah Jadwal Dokter Baru</h2>
-            <p class="text-sm text-gray-600 mt-1">
-                Tentukan dokter, hari praktik, dan jam pelayanan pasien.
+            <p class="text-sm text-emerald-700 mb-1">Manajemen Obat & Tindakan</p>
+            <h2 class="text-3xl font-bold text-gray-800">Tambah Obat / Tindakan Baru</h2>
+            <p class="text-sm text-gray-500 mt-1">
+                Tambahkan data obat atau tindakan medis yang tersedia di rumah sakit.
             </p>
         </div>
 
-        <a href="{{ route('admin.schedules.index') }}" class="px-4 py-2 bg-gray-300 text-gray-700 font-semibold rounded-lg shadow-md hover:bg-gray-400 transition duration-200">
+        <a href="{{ route('admin.medicines.index') }}"
+           class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 text-sm font-semibold rounded-lg shadow-sm hover:bg-gray-200">
             Kembali ke Daftar
         </a>
     </div>
 
-    <div class="bg-white shadow-xl rounded-xl p-6 lg:p-8">
-        <form action="{{ route('admin.schedules.store') }}" method="POST">
+    <div class="bg-white p-8 shadow-xl rounded-2xl max-w-2xl mx-auto border border-emerald-100">
+        <form action="{{ route('admin.medicines.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
 
-            {{-- Dokter --}}
+            {{-- Nama --}}
             <div class="mb-4">
-                <label for="doctor_id" class="block text-sm font-medium text-gray-700 mb-1">
-                    Dokter
+                <label for="name" class="block text-gray-700 text-sm font-semibold mb-2">
+                    Nama Obat / Tindakan <span class="text-red-500">*</span>
                 </label>
-                <select name="doctor_id" id="doctor_id" required class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-emerald-500 focus:border-emerald-500 @error('doctor_id') border-red-500 @enderror">
-                    <option value="">-- Pilih Dokter --</option>
-                    @foreach ($doctors as $doctor)
-                        <option value="{{ $doctor->id }}" {{ old('doctor_id') == $doctor->id ? 'selected' : '' }}>
-                            {{ $doctor->user->name ?? 'Dokter Tanpa Nama' }} ({{ $doctor->poli->name ?? 'Poli tidak diketahui' }})
+                <input type="text" name="name" id="name"
+                       value="{{ old('name') }}"
+                       placeholder="Contoh: Paracetamol / Pemeriksaan Dokter Umum"
+                       class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 @error('name') border-red-500 @enderror">
+                @error('name')
+                    <p class="text-red-500 text-xs italic mt-2">{{ $message }}</p>
+                @enderror
+            </div>
+
+            {{-- Jenis: Obat / Tindakan --}}
+            <div class="mb-4">
+                <label for="type" class="block text-gray-700 text-sm font-semibold mb-2">
+                    Jenis Item <span class="text-red-500">*</span>
+                </label>
+                <select name="type" id="type"
+                        class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 @error('type') border-red-500 @enderror">
+                    @foreach($types as $value)
+                        <option value="{{ $value }}" {{ old('type') === $value ? 'selected' : '' }}>
+                            {{ $value }}
                         </option>
                     @endforeach
                 </select>
-                @error('doctor_id')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                @error('type')
+                    <p class="text-red-500 text-xs italic mt-2">{{ $message }}</p>
                 @enderror
+                <p class="text-xs text-gray-400 mt-1">
+                    Pilih <strong>Obat</strong> untuk obat farmasi, atau <strong>Tindakan</strong> untuk layanan medis seperti pemeriksaan dokter.
+                </p>
             </div>
 
-            {{-- Hari Praktik --}}
+            {{-- Tipe Obat: keras / biasa --}}
             <div class="mb-4">
-                <label for="day" class="block text-sm font-medium text-gray-700 mb-1">
-                    Hari Praktik
+                <label for="drug_type" class="block text-gray-700 text-sm font-semibold mb-2">
+                    Tipe Obat
                 </label>
-                <select name="day" id="day" required class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-emerald-500 focus:border-emerald-500 @error('day') border-red-500 @enderror">
-                    <option value="">-- Pilih Hari --</option>
-                    @foreach ($days as $key => $day)
-                        <option value="{{ $key }}" {{ old('day') == $key ? 'selected' : '' }}>{{ $day }}</option>
+                <select name="drug_type" id="drug_type"
+                        class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 @error('drug_type') border-red-500 @enderror">
+                    <option value="">-- Pilih Tipe Obat (Opsional) --</option>
+                    @foreach($drugTypes as $value)
+                        <option value="{{ $value }}" {{ old('drug_type') === $value ? 'selected' : '' }}>
+                            {{ ucfirst($value) }}
+                        </option>
                     @endforeach
                 </select>
-                @error('day')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                @error('drug_type')
+                    <p class="text-red-500 text-xs italic mt-2">{{ $message }}</p>
+                @enderror>
+                <p class="text-xs text-gray-400 mt-1">
+                    Wajib diisi untuk <strong>Obat</strong>. Untuk <strong>Tindakan</strong> boleh dikosongkan.
+                </p>
+            </div>
+
+            {{-- Stok --}}
+            <div class="mb-4">
+                <label for="stock" class="block text-gray-700 text-sm font-semibold mb-2">
+                    Stok <span class="text-red-500">*</span>
+                </label>
+                <input type="number" name="stock" id="stock" min="0" step="1"
+                       value="{{ old('stock', 0) }}"
+                       class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 @error('stock') border-red-500 @enderror">
+                @error('stock')
+                    <p class="text-red-500 text-xs italic mt-2">{{ $message }}</p>
+                @enderror
+                <p class="text-xs text-gray-400 mt-1">
+                    Untuk <strong>Tindakan</strong> bisa diisi 0.
+                </p>
+            </div>
+
+            {{-- Harga --}}
+            <div class="mb-4">
+                <label for="price" class="block text-gray-700 text-sm font-semibold mb-2">
+                    Harga (Rp) <span class="text-red-500">*</span>
+                </label>
+                <input type="number" name="price" id="price" min="0" step="100"
+                       value="{{ old('price') }}"
+                       class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 @error('price') border-red-500 @enderror">
+                @error('price')
+                    <p class="text-red-500 text-xs italic mt-2">{{ $message }}</p>
                 @enderror
             </div>
 
-            {{-- Jam Mulai & Selesai --}}
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="mb-4">
-                    <label for="start_time" class="block text-sm font-medium text-gray-700 mb-1">
-                        Jam Mulai Praktik
-                    </label>
-                    <input type="time" name="start_time" id="start_time" value="{{ old('start_time') }}" required class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-emerald-500 focus:border-emerald-500 @error('start_time') border-red-500 @enderror">
-                    @error('start_time')
-                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div class="mb-4">
-                    <label for="end_time" class="block text-sm font-medium text-gray-700 mb-1">
-                        Jam Selesai Praktik
-                    </label>
-                    <input type="time" name="end_time" id="end_time" value="{{ old('end_time') }}" required class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-emerald-500 focus:border-emerald-500 @error('end_time') border-red-500 @enderror">
-                    @error('end_time')
-                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
+            {{-- Deskripsi --}}
+            <div class="mb-4">
+                <label for="description" class="block text-gray-700 text-sm font-semibold mb-2">
+                    Deskripsi (Opsional)
+                </label>
+                <textarea name="description" id="description" rows="4"
+                          class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 @error('description') border-red-500 @enderror">{{ old('description') }}</textarea>
+                @error('description')
+                    <p class="text-red-500 text-xs italic mt-2">{{ $message }}</p>
+                @enderror
             </div>
 
-            <div class="pt-4 border-t mt-4">
-                <button type="submit" class="px-6 py-2 bg-indigo-600 text-white font-bold rounded-lg shadow-lg hover:bg-indigo-700 transition duration-200 w-full md:w-auto">
-                    Simpan Jadwal
+            {{-- Gambar Obat --}}
+            <div class="mb-6">
+                <label for="image" class="block text-gray-700 text-sm font-semibold mb-2">
+                    Gambar Obat (Opsional)
+                </label>
+                <input type="file" name="image" id="image"
+                       class="block w-full text-sm text-gray-700
+                              file:mr-4 file:py-2 file:px-4
+                              file:rounded-lg file:border-0
+                              file:text-sm file:font-semibold
+                              file:bg-emerald-50 file:text-emerald-700
+                              hover:file:bg-emerald-100
+                              @error('image') border border-red-500 rounded-lg @enderror">
+                @error('image')
+                    <p class="text-red-500 text-xs italic mt-2">{{ $message }}</p>
+                @enderror
+                <p class="text-xs text-gray-400 mt-1">
+                    Format: JPG/PNG, maksimal 2MB.
+                </p>
+            </div>
+
+            <div class="flex items-center justify-between">
+                <button type="submit"
+                        class="px-6 py-3 bg-emerald-600 text-white font-semibold rounded-lg shadow-md hover:bg-emerald-700 transition duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2">
+                    Simpan Data
                 </button>
+                <a href="{{ route('admin.medicines.index') }}"
+                   class="inline-block align-baseline font-semibold text-sm text-gray-500 hover:text-gray-800">
+                    Batal
+                </a>
             </div>
         </form>
     </div>

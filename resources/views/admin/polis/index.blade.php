@@ -35,6 +35,7 @@
             <thead>
                 <tr class="bg-emerald-50 border-b border-emerald-100 text-gray-700 text-xs font-semibold uppercase tracking-wider">
                     <th class="px-6 py-3">ID</th>
+                    <th class="px-6 py-3">Ikon</th>
                     <th class="px-6 py-3">Nama Poli</th>
                     <th class="px-6 py-3">Deskripsi</th>
                     <th class="px-6 py-3 text-center">Aksi</th>
@@ -46,6 +47,21 @@
                         <td class="px-6 py-4 text-sm text-gray-900">
                             {{ $poli->id }}
                         </td>
+
+                        {{-- Kolom Ikon --}}
+                        <td class="px-6 py-4 text-sm text-gray-900">
+                            @if($poli->icon)
+                                <span class="inline-flex items-center gap-2">
+                                    <i class="fa-solid fa-{{ $poli->icon }} text-xl"></i>
+                                    <span class="text-xs text-gray-500">
+                                        {{ $poli->icon }}
+                                    </span>
+                                </span>
+                            @else
+                                <span class="text-xs text-gray-400">Tidak ada ikon</span>
+                            @endif
+                        </td>
+
                         <td class="px-6 py-4 text-sm font-semibold text-gray-900">
                             {{ $poli->name }}
                         </td>
@@ -75,7 +91,7 @@
                     </tr>
                 @empty
                     <tr class="text-center">
-                        <td colspan="4" class="px-6 py-6 text-gray-500 text-sm">
+                        <td colspan="5" class="px-6 py-6 text-gray-500 text-sm">
                             Belum ada data Poli yang tersedia.
                         </td>
                     </tr>

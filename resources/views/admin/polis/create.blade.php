@@ -40,7 +40,7 @@
             </div>
 
             {{-- Deskripsi --}}
-            <div class="mb-6">
+            <div class="mb-4">
                 <label for="description" class="block text-gray-700 text-sm font-semibold mb-2">
                     Deskripsi (Opsional)
                 </label>
@@ -53,6 +53,34 @@
                 @error('description')
                     <p class="text-red-500 text-xs italic mt-2">{{ $message }}</p>
                 @enderror
+            </div>
+
+            {{-- Ikon Poli --}}
+            <div class="mb-6">
+                <label for="icon" class="block text-gray-700 text-sm font-semibold mb-2">
+                    Ikon Poli (Opsional)
+                </label>
+
+                <select
+                    name="icon"
+                    id="icon"
+                    class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 bg-white leading-tight focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 @error('icon') border-red-500 @enderror">
+                    <option value="">-- Pilih Ikon --</option>
+                    @foreach($icons as $value => $label)
+                        <option value="{{ $value }}" {{ old('icon') == $value ? 'selected' : '' }}>
+                            {{ $label }}
+                        </option>
+                    @endforeach
+                </select>
+
+                @error('icon')
+                    <p class="text-red-500 text-xs italic mt-2">{{ $message }}</p>
+                @enderror
+
+                <p class="text-xs text-gray-400 mt-1">
+                    Ikon akan ditampilkan menggunakan FontAwesome, misalnya
+                    <code class="bg-gray-100 px-1 rounded text-xs">fa-{{ old('icon') ?: 'stethoscope' }}</code>.
+                </p>
             </div>
 
             <div class="flex items-center justify-between">

@@ -5,23 +5,39 @@
 
     <div class="flex items-center justify-between mb-6">
         <div>
-            <p class="text-sm text-emerald-700 mb-1">Transaksi & Jadwal</p>
-            <h2 class="text-3xl font-bold text-gray-800">Manajemen Janji Temu (Appointment)</h2>
+            <p class="text-sm text-emerald-700 mb-1">Jadwal</p>
+            <h2 class="text-3xl font-bold text-gray-800">Verifikasi Janji Temu (Appointment)</h2>
             <p class="text-sm text-gray-500">
-                Kelola jadwal janji temu pasien dengan dokter di sistem rumah sakit.
+                Admin dapat melihat dan memverifikasi (approve / reject) janji temu pasien dengan dokter.
             </p>
         </div>
 
-        <a href="{{ route('admin.appointments.create') }}"
-           class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg shadow-md hover:bg-indigo-700 transition">
-            + Buat Janji Temu
-        </a>
+        {{-- Filter status opsional --}}
+        <form method="GET" class="flex items-center space-x-2">
+            <label for="status" class="text-xs text-gray-500">Filter status:</label>
+            <select name="status" id="status"
+                    onchange="this.form.submit()"
+                    class="text-xs px-2 py-1 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500">
+                <option value="" {{ request('status') === null ? 'selected' : '' }}>Semua</option>
+                <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pending</option>
+                <option value="approved" {{ request('status') === 'approved' ? 'selected' : '' }}>Approved</option>
+                <option value="rejected" {{ request('status') === 'rejected' ? 'selected' : '' }}>Rejected</option>
+                <option value="done" {{ request('status') === 'done' ? 'selected' : '' }}>Selesai</option>
+            </select>
+        </form>
     </div>
 
     {{-- Alert sukses --}}
     @if(session('success'))
         <div class="mb-4 bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-lg text-sm">
             {{ session('success') }}
+        </div>
+    @endif
+
+    {{-- Alert error --}}
+    @if(session('error'))
+        <div class="mb-4 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg text-sm">
+            {{ session('error') }}
         </div>
     @endif
 
@@ -34,7 +50,7 @@
                     <th class="px-6 py-3 text-left">Dokter</th>
                     <th class="px-6 py-3 text-left">Alasan / Keluhan</th>
                     <th class="px-6 py-3 text-left">Status</th>
-                    <th class="px-6 py-3 text-center">Aksi</th>
+                    <th class="px-6 py-3 text-center">Verifikasi</th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200 text-sm">
@@ -97,36 +113,54 @@
                             <span class="px-3 py-1 rounded-full text-xs font-semibold {{ $badge }}">
                                 {{ strtoupper($status) }}
                             </span>
+
+                            @if($appointment->status === 'rejected' && $appointment->reject_reason)
+                                <div class="mt-1 text-xs text-gray-500">
+                                    Alasan: {{ $appointment->reject_reason }}
+                                </div>
+                            @endif
                         </td>
 
-                        {{-- Aksi --}}
+                        {{-- Verifikasi --}}
                         <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                            <div class="flex items-center justify-center space-x-3">
+                            @if($appointment->status === 'pending')
+                                <div class="flex flex-col items-center space-y-2">
 
-                                {{-- Detail (SHOW) --}}
-                                <a href="{{ route('admin.appointments.show', $appointment->id) }}"
-                                   class="text-emerald-700 hover:text-emerald-900">
-                                    Detail
-                                </a>
+                                    {{-- APPROVE --}}
+                                    <form action="{{ route('admin.appointments.update-status', $appointment->id) }}"
+                                          method="POST"
+                                          class="inline-flex items-center">
+                                        @csrf
+                                        @method('PATCH')
+                                        <input type="hidden" name="status" value="approved">
+                                        <button type="submit"
+                                                class="px-3 py-1 text-xs font-semibold rounded-full bg-emerald-600 text-white hover:bg-emerald-700">
+                                            Approve
+                                        </button>
+                                    </form>
 
-                                {{-- Edit --}}
-                                <a href="{{ route('admin.appointments.edit', $appointment->id) }}"
-                                   class="text-indigo-600 hover:text-indigo-900">
-                                    Edit
-                                </a>
-
-                                {{-- Hapus --}}
-                                <form action="{{ route('admin.appointments.destroy', $appointment->id) }}"
-                                      method="POST"
-                                      onsubmit="return confirm('Yakin ingin menghapus janji temu ini?')" class="inline">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit"
-                                            class="text-red-600 hover:text-red-800">
-                                        Hapus
-                                    </button>
-                                </form>
-                            </div>
+                                    {{-- REJECT --}}
+                                    <form action="{{ route('admin.appointments.update-status', $appointment->id) }}"
+                                          method="POST"
+                                          class="inline-flex flex-col items-center space-y-1">
+                                        @csrf
+                                        @method('PATCH')
+                                        <input type="hidden" name="status" value="rejected">
+                                        <input type="text"
+                                               name="reject_reason"
+                                               placeholder="Alasan (opsional)"
+                                               class="px-2 py-1 text-xs border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 w-40">
+                                        <button type="submit"
+                                                class="px-3 py-1 text-xs font-semibold rounded-full bg-red-600 text-white hover:bg-red-700">
+                                            Reject
+                                        </button>
+                                    </form>
+                                </div>
+                            @else
+                                <span class="text-xs text-gray-400">
+                                    Tidak ada aksi
+                                </span>
+                            @endif
                         </td>
                     </tr>
                 @empty

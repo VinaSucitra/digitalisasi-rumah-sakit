@@ -3,18 +3,48 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
+use App\Models\Poli;
 
 class PoliSeeder extends Seeder
 {
+    /**
+     * Jalankan database seed.
+     */
     public function run(): void
     {
-        DB::table('polis')->insert([
-            ['name' => 'Poli Umum'],
-            ['name' => 'Poli Gigi'],
-            ['name' => 'Poli Anak'],
-            ['name' => 'Poli THT'],
-            ['name' => 'Poli Kandungan'],
-        ]);
+        $polis = [
+            [
+                'name' => 'Poli Umum',
+                'description' => 'Layanan pemeriksaan umum dan keluhan dasar.',
+                'icon' => 'stethoscope',
+            ],
+            [
+                'name' => 'Poli Gigi',
+                'description' => 'Layanan perawatan dan pemeriksaan kesehatan gigi.',
+                'icon' => 'tooth',
+            ],
+            [
+                'name' => 'Poli Anak',
+                'description' => 'Layanan kesehatan khusus untuk anak-anak.',
+                'icon' => 'baby',
+            ],
+            [
+                'name' => 'Poli THT',
+                'description' => 'Pemeriksaan telinga, hidung, dan tenggorokan.',
+                'icon' => 'ear-listen',
+            ],
+            [
+                'name' => 'Poli Jantung',
+                'description' => 'Pemeriksaan dan konsultasi masalah kardiovaskular.',
+                'icon' => 'heart-pulse',
+            ],
+        ];
+
+        foreach ($polis as $poli) {
+            Poli::firstOrCreate(
+                ['name' => $poli['name']], // agar tidak double kalau seeder dijalankan ulang
+                $poli
+            );
+        }
     }
 }

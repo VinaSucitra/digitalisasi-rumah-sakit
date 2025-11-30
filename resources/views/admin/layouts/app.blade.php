@@ -69,7 +69,7 @@
             </a>
 
             <p class="px-3 text-[11px] font-semibold tracking-wide text-teal-400 uppercase mt-4 mb-1">
-                Transaksi & Jadwal
+                 Jadwal
             </p>
             <a href="{{ route('admin.appointments.index') }}"
                class="flex items-center gap-3 px-3 py-2 rounded-lg
@@ -77,22 +77,7 @@
                 <i class="fas fa-calendar-check w-5"></i>
                 <span>Janji Temu</span>
             </a>
-            @if(Route::has('admin.schedules.index'))
-            <a href="{{ route('admin.schedules.index') }}"
-               class="flex items-center gap-3 px-3 py-2 rounded-lg
-                      {{ request()->is('admin/schedules*') ? 'bg-teal-700' : 'hover:bg-teal-800/70' }}">
-                <i class="fas fa-clock w-5"></i>
-                <span>Jadwal Dokter</span>
-            </a>
-            @endif
-            @if(Route::has('admin.transactions.index'))
-            <a href="{{ route('admin.transactions.index') }}"
-               class="flex items-center gap-3 px-3 py-2 rounded-lg
-                      {{ request()->is('admin/transactions*') ? 'bg-teal-700' : 'hover:bg-teal-800/70' }}">
-                <i class="fas fa-file-invoice-dollar w-5"></i>
-                <span>Transaksi</span>
-            </a>
-            @endif
+            
         </nav>
 
         {{-- FOOTER USER --}}

@@ -43,7 +43,7 @@
             </div>
 
             <p class="text-xs text-gray-500">
-                Total: {{ $medicines->count() }} item
+                Total: {{ $medicines->total() }} item
             </p>
         </div>
 
@@ -53,6 +53,8 @@
                     <tr class="bg-gray-50 border-b border-gray-100 text-gray-600 text-xs font-semibold uppercase tracking-wider">
                         <th class="px-6 py-3 text-left">Nama</th>
                         <th class="px-6 py-3 text-left">Jenis</th>
+                        <th class="px-6 py-3 text-left">Tipe Obat</th>
+                        <th class="px-6 py-3 text-left">Stok</th>
                         <th class="px-6 py-3 text-left">Harga</th>
                         <th class="px-6 py-3 text-left">Deskripsi</th>
                         <th class="px-6 py-3 text-center">Aksi</th>
@@ -61,21 +63,58 @@
                 <tbody>
                     @forelse ($medicines as $medicine)
                         <tr class="hover:bg-emerald-50/40 transition duration-150 border-b border-gray-100">
+                            {{-- Nama --}}
                             <td class="px-6 py-3 text-sm font-semibold text-gray-900">
                                 {{ $medicine->name }}
                             </td>
+
+                            {{-- Jenis: Obat / Tindakan --}}
                             <td class="px-6 py-3 text-sm">
                                 <span class="inline-flex px-3 py-1 rounded-full text-xs font-semibold 
                                     {{ $medicine->type === 'Obat' ? 'bg-blue-50 text-blue-700' : 'bg-purple-50 text-purple-700' }}">
                                     {{ $medicine->type }}
                                 </span>
                             </td>
+
+                            {{-- Tipe Obat: keras / biasa (hanya untuk Obat) --}}
+                            <td class="px-6 py-3 text-sm text-gray-700">
+                                @if($medicine->type === 'Obat' && $medicine->drug_type)
+                                    <span class="inline-flex px-2 py-1 rounded-full text-xs font-medium
+                                        {{ $medicine->drug_type === 'keras' ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-700' }}">
+                                        Obat {{ ucfirst($medicine->drug_type) }}
+                                    </span>
+                                @else
+                                    <span class="text-xs text-gray-400">-</span>
+                                @endif
+                            </td>
+
+                            {{-- Stok + status --}}
+                            <td class="px-6 py-3 text-sm text-gray-900">
+                                <div class="flex items-center space-x-2">
+                                    <span>{{ $medicine->stock }}</span>
+                                    @if($medicine->stock > 0)
+                                        <span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700">
+                                            Tersedia
+                                        </span>
+                                    @else
+                                        <span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold bg-red-50 text-red-700">
+                                            Habis
+                                        </span>
+                                    @endif
+                                </div>
+                            </td>
+
+                            {{-- Harga --}}
                             <td class="px-6 py-3 text-sm text-gray-900">
                                 Rp {{ number_format($medicine->price, 0, ',', '.') }}
                             </td>
+
+                            {{-- Deskripsi --}}
                             <td class="px-6 py-3 text-sm text-gray-600">
                                 {{ \Illuminate\Support\Str::limit($medicine->description ?: 'Tidak ada deskripsi', 60) }}
                             </td>
+
+                            {{-- Aksi --}}
                             <td class="px-6 py-3 text-sm text-center">
                                 <div class="flex justify-center space-x-4">
                                     <a href="{{ route('admin.medicines.edit', $medicine->id) }}"
@@ -109,7 +148,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-6 py-6 text-center text-sm text-gray-500">
+                            <td colspan="7" class="px-6 py-6 text-center text-sm text-gray-500">
                                 Belum ada data obat / tindakan.
                             </td>
                         </tr>

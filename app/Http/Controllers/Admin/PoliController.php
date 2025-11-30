@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Poli;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\Storage; // <<< IMPORT UNTUK PENGHAPUSAN FILE
 
 class PoliController extends Controller
 {
@@ -16,7 +15,8 @@ class PoliController extends Controller
     public function index()
     {
         $polis = Poli::all();
-        // Catatan: Akan memanggil view('admin.polis.index')
+
+        // view: resources/views/admin/polis/index.blade.php
         return view('admin.polis.index', compact('polis'));
     }
 
@@ -25,8 +25,11 @@ class PoliController extends Controller
      */
     public function create()
     {
-        // Catatan: Akan memanggil view('admin.polis.create')
-        return view('admin.polis.create');
+        // Daftar ikon yang boleh dipilih (FontAwesome)
+        $icons = $this->getAvailableIcons();
+
+        // view: resources/views/admin/polis/create.blade.php
+        return view('admin.polis.create', compact('icons'));
     }
 
     /**
@@ -35,23 +38,20 @@ class PoliController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255|unique:polis,name', 
+            'name'        => 'required|string|max:255|unique:polis,name',
             'description' => 'nullable|string',
-            'icon' => 'nullable|image|mimes:png,jpg,jpeg|max:2048', // Maks 2MB
+            'icon'        => 'nullable|string|max:50', // nama ikon, bukan file
         ]);
-
-        $iconPath = null;
-        if ($request->hasFile('icon')) {
-            $iconPath = $request->file('icon')->store('public/polis_icons');
-        }
 
         Poli::create([
-            'name' => $request->name,
+            'name'        => $request->name,
             'description' => $request->description,
-            'icon' => $iconPath,
+            'icon'        => $request->icon, // contoh: 'stethoscope'
         ]);
 
-        return redirect()->route('admin.polis.index')->with('success', 'Poli berhasil ditambahkan.');
+        return redirect()
+            ->route('admin.polis.index')
+            ->with('success', 'Poli berhasil ditambahkan.');
     }
 
     /**
@@ -59,8 +59,10 @@ class PoliController extends Controller
      */
     public function edit(Poli $poli)
     {
-        // Catatan: Akan memanggil view('admin.polis.edit')
-        return view('admin.polis.edit', compact('poli'));
+        $icons = $this->getAvailableIcons();
+
+        // view: resources/views/admin/polis/edit.blade.php
+        return view('admin.polis.edit', compact('poli', 'icons'));
     }
 
     /**
@@ -68,31 +70,21 @@ class PoliController extends Controller
      */
     public function update(Request $request, Poli $poli)
     {
-        // Validasi, kecuali untuk nama Poli yang sedang diupdate
         $request->validate([
-            'name' => ['required', 'string', 'max:255', Rule::unique('polis')->ignore($poli->id)], 
+            'name'        => ['required', 'string', 'max:255', Rule::unique('polis', 'name')->ignore($poli->id)],
             'description' => ['nullable', 'string'],
-            'icon' => ['nullable', 'image', 'mimes:png,jpg,jpeg', 'max:2048'],
+            'icon'        => ['nullable', 'string', 'max:50'],
         ]);
-
-        $iconPath = $poli->icon;
-
-        if ($request->hasFile('icon')) {
-            // Hapus ikon lama jika ada
-            if ($iconPath) {
-                Storage::delete($iconPath);
-            }
-            // Simpan ikon baru
-            $iconPath = $request->file('icon')->store('public/polis_icons');
-        }
 
         $poli->update([
-            'name' => $request->name,
+            'name'        => $request->name,
             'description' => $request->description,
-            'icon' => $iconPath,
+            'icon'        => $request->icon,
         ]);
 
-        return redirect()->route('admin.polis.index')->with('success', 'Poli berhasil diperbarui.');
+        return redirect()
+            ->route('admin.polis.index')
+            ->with('success', 'Poli berhasil diperbarui.');
     }
 
     /**
@@ -100,12 +92,29 @@ class PoliController extends Controller
      */
     public function destroy(Poli $poli)
     {
-        if ($poli->icon) {
-            Storage::delete($poli->icon);
-        }
-
         $poli->delete();
 
-        return redirect()->route('admin.polis.index')->with('success', 'Poli berhasil dihapus.');
+        return redirect()
+            ->route('admin.polis.index')
+            ->with('success', 'Poli berhasil dihapus.');
+    }
+
+    /**
+     * Daftar ikon yang bisa dipilih admin.
+     * (Nama-nama ini disimpan di kolom 'icon')
+     */
+    private function getAvailableIcons(): array
+    {
+        return [
+            'stethoscope'      => 'Stetoskop (Umum)',
+            'tooth'            => 'Gigi',
+            'baby'             => 'Anak',
+            'person-pregnant'  => 'Kandungan',
+            'ear-listen'       => 'THT',
+            'heart-pulse'      => 'Jantung',
+            'lungs'            => 'Paru-paru',
+            'brain'            => 'Saraf',
+            'eye'              => 'Mata',
+        ];
     }
 }

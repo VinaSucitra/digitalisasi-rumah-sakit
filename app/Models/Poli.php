@@ -10,14 +10,16 @@ class Poli extends Model
     use HasFactory;
 
     protected $table = 'polis';
-    protected $fillable = ['name', 'description'];
+
+    // Tambahkan 'icon' di sini
+    protected $fillable = ['name', 'description', 'icon'];
 
     // Relasi 1:N ke DoctorDetail
     public function doctors()
     {
         return $this->hasMany(DoctorDetail::class);
     }
-    
+
     // Relasi 1:N ke Appointment
     public function appointments()
     {

@@ -14,7 +14,6 @@ use App\Http\Controllers\Admin\DoctorController as AdminDoctorController;
 use App\Http\Controllers\Admin\PatientController;
 use App\Http\Controllers\Admin\MedicineController;
 use App\Http\Controllers\Admin\AppointmentController as AdminAppointment;
-use App\Http\Controllers\Admin\ScheduleController;
 use App\Http\Controllers\Admin\TransactionController;
 use App\Http\Controllers\Admin\UserController as AdminUser;
 
@@ -22,6 +21,7 @@ use App\Http\Controllers\Admin\UserController as AdminUser;
 use App\Http\Controllers\Doctor\DashboardController as DoctorDashboard;
 use App\Http\Controllers\Doctor\AppointmentController as DoctorAppointment;
 use App\Http\Controllers\Doctor\MedicalRecordController as DoctorRecord;
+use App\Http\Controllers\Doctor\ScheduleController;
 
 // Patient Controllers
 use App\Http\Controllers\Patient\DashboardController as PatientDashboard;
@@ -93,8 +93,8 @@ Route::middleware('auth')->group(function () {
         Route::resource('patients', PatientController::class)->except(['show']);
         Route::resource('medicines', MedicineController::class)->except(['show']);
         Route::resource('users', AdminUser::class)->except(['show']);
-        Route::resource('appointments', AdminAppointment::class);
-        Route::resource('schedules', ScheduleController::class)->except(['show']);
+        Route::get('appointments', [AdminAppointment::class, 'index'])->name('appointments.index');
+        Route::patch('appointments/{appointment}/status', [AdminAppointment::class, 'updateStatus'])->name('appointments.update-status');
         Route::resource('transactions', TransactionController::class)->only(['index', 'show']);
     });
 
@@ -108,6 +108,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/dashboard', [DoctorDashboard::class, 'index'])->name('dashboard');
         Route::resource('appointments', DoctorAppointment::class)->only(['index', 'show', 'update']);
         Route::resource('medical_records', DoctorRecord::class)->except(['destroy']);
+        Route::resource('schedules', ScheduleController::class)->except(['show']);
     });
 
     /*

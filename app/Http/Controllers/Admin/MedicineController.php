@@ -3,18 +3,20 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Medicine; // PENTING: Import Model Medicine
+use App\Models\Medicine;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class MedicineController extends Controller
 {
     /**
-     * Menampilkan daftar semua obat. (READ - Index)
+     * Menampilkan daftar semua obat/tindakan. (READ - Index)
      */
     public function index()
     {
-        // Mengambil semua data obat dengan urutan berdasarkan nama
+        // Ambil semua data, urut nama
         $medicines = Medicine::orderBy('name')->paginate(15);
+
         return view('admin.medicines.index', compact('medicines'));
     }
 
@@ -23,8 +25,13 @@ class MedicineController extends Controller
      */
     public function create()
     {
-        // Menampilkan form untuk menambahkan obat baru
-        return view('admin.medicines.create');
+        // type: Obat / Tindakan
+        $types = ['Obat', 'Tindakan'];
+
+        // drug_type hanya untuk Obat: biasa / keras
+        $drugTypes = ['biasa', 'keras'];
+
+        return view('admin.medicines.create', compact('types', 'drugTypes'));
     }
 
     /**
@@ -32,28 +39,42 @@ class MedicineController extends Controller
      */
     public function store(Request $request)
     {
-        // Validasi input dari form
         $validatedData = $request->validate([
-            'name' => 'required|string|max:255|unique:medicines,name',
-            'type' => 'required|string|max:255', // Menambahkan jenis obat
-            'price' => 'required|numeric|min:0', // Harga obat
-            'description' => 'nullable|string',  // Deskripsi opsional
+            'name'        => 'required|string|max:255|unique:medicines,name',
+            'type'        => 'required|in:Obat,Tindakan',      // Jenis item
+            'drug_type'   => 'nullable|in:biasa,keras',        // Tipe obat
+            'stock'       => 'required|integer|min:0',         // Stok
+            'price'       => 'required|numeric|min:0',         // Harga
+            'description' => 'nullable|string',                // Deskripsi opsional
+            'image'       => 'nullable|image|mimes:jpg,jpeg,png|max:2048', // Gambar opsional
         ]);
 
-        // Menyimpan data obat ke dalam database
+        // Kalau jenisnya Tindakan, drug_type tidak relevan, boleh diset null
+        if ($validatedData['type'] === 'Tindakan') {
+            $validatedData['drug_type'] = null;
+        }
+
+        // Upload gambar jika ada
+        $imagePath = null;
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('public/medicines');
+        }
+
+        $validatedData['image'] = $imagePath;
+
         Medicine::create($validatedData);
 
-        // Redirect ke halaman daftar obat dengan pesan sukses
-        return redirect()->route('admin.medicines.index')
-                         ->with('success', 'Data Obat berhasil ditambahkan.');
+        return redirect()
+            ->route('admin.medicines.index')
+            ->with('success', 'Data Obat/Tindakan berhasil ditambahkan.');
     }
 
     /**
      * Menampilkan detail obat tertentu. (READ - Show)
+     * (Opsional, bisa tidak dipakai)
      */
     public function show(Medicine $medicine)
     {
-        // Menampilkan detail dari obat yang dipilih
         return view('admin.medicines.show', compact('medicine'));
     }
 
@@ -62,8 +83,10 @@ class MedicineController extends Controller
      */
     public function edit(Medicine $medicine)
     {
-        // Menampilkan form untuk mengedit data obat
-        return view('admin.medicines.edit', compact('medicine'));
+        $types = ['Obat', 'Tindakan'];
+        $drugTypes = ['biasa', 'keras'];
+
+        return view('admin.medicines.edit', compact('medicine', 'types', 'drugTypes'));
     }
 
     /**
@@ -71,32 +94,54 @@ class MedicineController extends Controller
      */
     public function update(Request $request, Medicine $medicine)
     {
-        // Validasi input dari form update
         $validatedData = $request->validate([
-            'name' => 'required|string|max:255|unique:medicines,name,' . $medicine->id, 
-            'type' => 'required|string|max:255', // Jenis obat
-            'price' => 'required|numeric|min:0', // Harga obat
-            'description' => 'nullable|string',  // Deskripsi opsional
+            'name'        => 'required|string|max:255|unique:medicines,name,' . $medicine->id,
+            'type'        => 'required|in:Obat,Tindakan',
+            'drug_type'   => 'nullable|in:biasa,keras',
+            'stock'       => 'required|integer|min:0',
+            'price'       => 'required|numeric|min:0',
+            'description' => 'nullable|string',
+            'image'       => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
-        // Update data obat di database
+        if ($validatedData['type'] === 'Tindakan') {
+            $validatedData['drug_type'] = null;
+        }
+
+        $imagePath = $medicine->image;
+
+        // Jika ada file gambar baru, hapus gambar lama lalu simpan baru
+        if ($request->hasFile('image')) {
+            if ($imagePath) {
+                Storage::delete($imagePath);
+            }
+
+            $imagePath = $request->file('image')->store('public/medicines');
+        }
+
+        $validatedData['image'] = $imagePath;
+
         $medicine->update($validatedData);
 
-        // Redirect ke halaman daftar obat dengan pesan sukses
-        return redirect()->route('admin.medicines.index')
-                         ->with('success', 'Data Obat berhasil diperbarui.');
+        return redirect()
+            ->route('admin.medicines.index')
+            ->with('success', 'Data Obat/Tindakan berhasil diperbarui.');
     }
 
     /**
-     * Menghapus obat. (DELETE - Destroy)
+     * Menghapus obat/tindakan. (DELETE - Destroy)
      */
     public function destroy(Medicine $medicine)
     {
-        // Menghapus data obat
+        // Hapus file gambar jika ada
+        if ($medicine->image) {
+            Storage::delete($medicine->image);
+        }
+
         $medicine->delete();
 
-        // Redirect ke halaman daftar obat dengan pesan sukses
-        return redirect()->route('admin.medicines.index')
-                         ->with('success', 'Data Obat berhasil dihapus.');
+        return redirect()
+            ->route('admin.medicines.index')
+            ->with('success', 'Data Obat/Tindakan berhasil dihapus.');
     }
 }
