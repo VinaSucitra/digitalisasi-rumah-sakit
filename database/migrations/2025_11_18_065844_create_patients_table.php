@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('patients', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->string('no_rm')->unique(); // nomor rekam medis
+            $table->string('no_rm')->unique();
             $table->date('birth_date')->nullable();
             $table->enum('gender', ['L', 'P'])->nullable();
             $table->text('address')->nullable();

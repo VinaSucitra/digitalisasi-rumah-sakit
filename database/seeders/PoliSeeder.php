@@ -42,7 +42,7 @@ class PoliSeeder extends Seeder
 
         foreach ($polis as $poli) {
             Poli::firstOrCreate(
-                ['name' => $poli['name']], // agar tidak double kalau seeder dijalankan ulang
+                ['name' => $poli['name']], 
                 $poli
             );
         }

@@ -14,7 +14,6 @@ use App\Http\Controllers\Admin\DoctorController as AdminDoctorController;
 use App\Http\Controllers\Admin\PatientController;
 use App\Http\Controllers\Admin\MedicineController;
 use App\Http\Controllers\Admin\AppointmentController as AdminAppointment;
-use App\Http\Controllers\Admin\TransactionController;
 use App\Http\Controllers\Admin\UserController as AdminUser;
 
 // Doctor Controllers
@@ -22,7 +21,7 @@ use App\Http\Controllers\Doctor\DashboardController as DoctorDashboard;
 use App\Http\Controllers\Doctor\AppointmentController as DoctorAppointment;
 use App\Http\Controllers\Doctor\MedicalRecordController as DoctorRecord;
 use App\Http\Controllers\Doctor\ScheduleController as DoctorSchedule;
-use App\Http\Controllers\Doctor\ProfileController as DoctorProfile; // <- dipakai di route dokter
+use App\Http\Controllers\Doctor\ProfileController as DoctorProfile; 
 
 // Patient Controllers
 use App\Http\Controllers\Patient\DashboardController as PatientDashboard;
@@ -78,10 +77,6 @@ Route::middleware('auth')->group(function () {
         return redirect()->route('guest.home');
     })->name('dashboard');
 
-    // Route profile default Breeze TIDAK dipakai (pakai role-based)
-    // Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    // Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    // Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     /*
     |--------------------------------------------------------------------------
@@ -100,14 +95,9 @@ Route::middleware('auth')->group(function () {
             Route::resource('patients', PatientController::class)->except(['show']);
             Route::resource('medicines', MedicineController::class)->except(['show']);
             Route::resource('users', AdminUser::class)->except(['show']);
-
-            // Janji temu: hanya index + ubah status
             Route::get('appointments', [AdminAppointment::class, 'index'])->name('appointments.index');
             Route::patch('appointments/{appointment}/status', [AdminAppointment::class, 'updateStatus'])
                 ->name('appointments.update-status');
-
-            // Transaksi (kalau mau dipakai; kalau tidak, resource ini bisa dihapus)
-            Route::resource('transactions', TransactionController::class)->only(['index', 'show']);
         });
 
     /*
@@ -121,17 +111,9 @@ Route::middleware('auth')->group(function () {
         ->group(function () {
 
             Route::get('/dashboard', [DoctorDashboard::class, 'index'])->name('dashboard');
-
-            // Janji temu milik dokter
             Route::resource('appointments', DoctorAppointment::class)->only(['index', 'show', 'update']);
-
-            // Rekam medis
             Route::resource('medical_records', DoctorRecord::class)->except(['destroy']);
-
-            // Jadwal praktik dokter (Schedule Management - Dokter)
             Route::resource('schedules', DoctorSchedule::class)->except(['show']);
-
-            // 🔥 PROFIL DOKTER (untuk link doctor.profile di layout)
             Route::get('/profile', [DoctorProfile::class, 'edit'])->name('profile');
             Route::put('/profile', [DoctorProfile::class, 'update'])->name('profile.update');
         });
@@ -151,13 +133,14 @@ Route::middleware('auth')->group(function () {
             Route::resource('appointments', PatientAppointment::class)
                 ->only(['index', 'create', 'store', 'show']);
 
+            Route::get('appointments/by-poli/{poli}', [PatientAppointment::class, 'getDoctorsByPoli'])
+                ->name('appointments.byPoli');
+
             Route::resource('medical_records', PatientRecord::class)
                 ->only(['index', 'show']);
 
             Route::resource('doctor_schedules', DoctorScheduleController::class)
                 ->only(['index', 'show']);
-
-            // Profil pasien (boleh pakai ProfileController global)
             
             Route::get('/profile', [PatientProfileController::class, 'edit'])->name('profile.edit');
             Route::put('/profile', [PatientProfileController::class, 'update'])->name('profile.update');
@@ -165,9 +148,6 @@ Route::middleware('auth')->group(function () {
 
 });
 
-/*
-|--------------------------------------------------------------------------
-| Auth routes (login/register) bawaan Breeze
-|--------------------------------------------------------------------------
-*/
+
+
 require __DIR__.'/auth.php';

@@ -28,8 +28,8 @@ return new class extends Migration
 
             // Isi rekam medis
             $table->text('diagnosis');
-            $table->text('treatment')->nullable(); // tindakan medis
-            $table->text('notes')->nullable();     // catatan tambahan
+            $table->text('treatment')->nullable();
+            $table->text('notes')->nullable();     
 
             // Tanggal kunjungan
             $table->date('visit_date');

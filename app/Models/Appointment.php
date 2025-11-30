@@ -52,6 +52,5 @@ class Appointment extends Model
         return $this->hasOne(MedicalRecord::class);
     }
 
-    // Poli? Tidak perlu disimpan. Ambil dari dokter:
-    // $appointment->doctor->poli
+   
 }

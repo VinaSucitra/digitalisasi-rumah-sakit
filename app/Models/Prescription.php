@@ -8,7 +8,7 @@ class Prescription extends Model
 {
     protected $fillable = [
         'medical_record_id',
-        'status', // pending, ready, taken
+        'status', 
     ];
 
     public function medicalRecord()

@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('polis', function (Blueprint $table) {
             $table->id();
-            $table->string('name')->unique();          // Nama Poli (Umum, Gigi, Anak, dll)
-            $table->string('description')->nullable(); // Deskripsi singkat
-            $table->string('icon')->nullable();        // Nama ikon (misal: stethoscope, tooth, dll)
+            $table->string('name')->unique();          
+            $table->string('description')->nullable(); 
+            $table->string('icon')->nullable();       
             $table->timestamps();
         });
     }

@@ -13,9 +13,9 @@ class Medicine extends Model
         'name',
         'description',
         'price',
-        'type',       // Obat / Tindakan
-        'drug_type',  // keras / biasa
-        'stock',      // stok
-        'image',      // path gambar
+        'type',       
+        'drug_type',  
+        'stock',      
+        'image',      
     ];
 }

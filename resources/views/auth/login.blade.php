@@ -1,84 +1,90 @@
-@extends('layouts.guest')
+@extends('layouts.auth')
 
-@section('title', 'Login')
+@section('title', 'Login - RS Digital')
 
-{{-- Halaman Login disetel agar terpusat di tengah --}}
 @section('content')
-<div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-100">
-    
-    {{-- Card Login: Maksimal lebar medium (sm:max-w-md), shadow, dan border atas Teal --}}
-    <div class="w-full sm:max-w-md mt-6 px-6 py-4 bg-white shadow-xl overflow-hidden sm:rounded-lg border-t-4 border-teal-500">
+    <h1 class="text-2xl md:text-3xl font-extrabold text-teal-800 text-center mb-2">
+        Selamat Datang Kembali
+    </h1>
+    <p class="text-sm text-gray-500 text-center mb-8">
+        Silakan masukkan detail akun Anda untuk melanjutkan.
+    </p>
 
-        <div class="text-center mb-8">
-            <h2 class="text-2xl font-bold text-teal-700">Selamat Datang Kembali</h2>
-            <p class="text-gray-500 text-sm">Silakan masukkan detail akun Anda</p>
+    {{-- Error global (session) --}}
+    @if (session('status'))
+        <div class="mb-4 text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3">
+            {{ session('status') }}
+        </div>
+    @endif
+
+    {{-- Validasi error --}}
+    @if ($errors->any())
+        <div class="mb-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+            <ul class="list-disc list-inside space-y-1">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    <form method="POST" action="{{ route('login') }}" class="space-y-5">
+        @csrf
+
+        {{-- Email --}}
+        <div>
+            <label for="email" class="block text-sm font-semibold text-gray-700 mb-1">
+                Email atau Nomor Telepon
+            </label>
+            <input id="email" type="email" name="email"
+                   value="{{ old('email') }}"
+                   required autofocus
+                   class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
         </div>
 
-        @if (session('status'))
-            <div class="mb-4 font-medium text-sm text-green-600">
-                {{ session('status') }}
-            </div>
-        @endif
+        {{-- Password --}}
+        <div>
+            <label for="password" class="block text-sm font-semibold text-gray-700 mb-1">
+                Password
+            </label>
+            <input id="password" type="password" name="password"
+                   required
+                   class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
+        </div>
 
-        <form method="POST" action="{{ route('login') }}">
-            @csrf
+        {{-- Remember --}}
+        <div class="flex items-center justify-between text-sm">
+            <label class="inline-flex items-center gap-2">
+                <input type="checkbox" name="remember"
+                       class="rounded border-gray-300 text-teal-600 focus:ring-teal-500">
+                <span>Remember me</span>
+            </label>
 
-            <div>
-                <label for="email" class="block text-sm font-medium text-gray-700">Email atau Nomor Telepon</label>
-                <input id="email" 
-                       class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:border-teal-500 focus:ring-teal-500" 
-                       type="email" 
-                       name="email" 
-                       value="{{ old('email') }}" 
-                       required 
-                       autofocus 
-                       autocomplete="username" />
-                @error('email')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
-            </div>
+            @if (Route::has('password.request'))
+                <a href="{{ route('password.request') }}"
+                   class="text-teal-600 hover:text-teal-800">
+                    Forgot your password?
+                </a>
+            @endif
+        </div>
 
-            <div class="mt-4">
-                <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-                <input id="password" 
-                       class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:border-teal-500 focus:ring-teal-500" 
-                       type="password" 
-                       name="password" 
-                       required 
-                       autocomplete="current-password" />
-                @error('password')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
-            </div>
+        {{-- Tombol --}}
+        <div class="pt-2">
+            <button type="submit"
+                    class="w-full inline-flex justify-center items-center gap-2 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-semibold text-sm py-2.5 shadow">
+                <i class="fas fa-sign-in-alt"></i>
+                <span>LOG IN</span>
+            </button>
+        </div>
+    </form>
 
-            <div class="block mt-4">
-                <label for="remember_me" class="inline-flex items-center">
-                    <input id="remember_me" type="checkbox" 
-                           class="rounded border-gray-300 text-teal-600 shadow-sm focus:ring-teal-500" 
-                           name="remember">
-                    <span class="ms-2 text-sm text-gray-600">{{ __('Remember me') }}</span>
-                </label>
-            </div>
-
-            <div class="flex items-center justify-end mt-4">
-                @if (Route::has('password.request'))
-                    <a class="underline text-sm text-gray-600 hover:text-teal-600 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition" href="{{ route('password.request') }}">
-                        {{ __('Forgot your password?') }}
-                    </a>
-                @endif
-
-                <button type="submit" 
-                        class="ms-4 inline-flex items-center px-4 py-2 bg-teal-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-teal-700 focus:bg-teal-700 active:bg-teal-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 transition ease-in-out duration-150">
-                    {{ __('Log in') }}
-                </button>
-            </div>
-            
-            <div class="mt-4 text-center text-sm">
-                <p class="text-gray-600">Belum punya akun? 
-                    <a href="{{ route('register') }}" class="font-semibold text-teal-600 hover:text-teal-800 transition">Daftar Sekarang</a>
-                </p>
-            </div>
-        </form>
-    </div>
-</div>
+    {{-- Link ke register --}}
+    @if (Route::has('register'))
+        <p class="mt-6 text-center text-sm text-gray-600">
+            Belum punya akun?
+            <a href="{{ route('register') }}" class="text-teal-600 font-semibold hover:text-teal-800">
+                Daftar Sekarang
+            </a>
+        </p>
+    @endif
 @endsection

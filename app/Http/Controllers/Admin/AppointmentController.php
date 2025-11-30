@@ -8,13 +8,9 @@ use Illuminate\Http\Request;
 
 class AppointmentController extends Controller
 {
-    /**
-     * Admin melihat semua janji temu.
-     * Default: pending ditampilkan dulu, tapi bisa difilter pakai query ?status=
-     */
     public function index(Request $request)
     {
-        $statusFilter = $request->query('status'); // pending / approved / rejected / done / null
+        $statusFilter = $request->query('status'); 
 
         $query = Appointment::with([
             'patient.user',
@@ -26,7 +22,6 @@ class AppointmentController extends Controller
         if ($statusFilter) {
             $query->where('status', $statusFilter);
         } else {
-            // default urutkan: pending di atas
             $query->orderByRaw("CASE WHEN status = 'pending' THEN 0 ELSE 1 END");
         }
 
@@ -38,9 +33,7 @@ class AppointmentController extends Controller
         return view('admin.appointments.index', compact('appointments'));
     }
 
-    /**
-     * Admin mengubah status janji temu (approve / reject).
-     */
+
     public function updateStatus(Request $request, Appointment $appointment)
     {
         $data = $request->validate([

@@ -17,11 +17,10 @@ return new class extends Migration
 
             $table->enum('day_of_week', ['senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu', 'minggu']);
             $table->time('start_time');
-            $table->time('end_time'); // start_time + 30 menit
+            $table->time('end_time'); 
 
             $table->timestamps();
 
-            // Cegah jadwal tabrakan untuk dokter yang sama
             $table->unique(['doctor_id', 'day_of_week', 'start_time'], 'uniq_doctor_schedule');
         });
     }

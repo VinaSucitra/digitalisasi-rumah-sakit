@@ -15,11 +15,6 @@ use Carbon\Carbon;
 
 class MedicalRecordController extends Controller
 {
-    /**
-     * HALAMAN UTAMA DOKTER:
-     * - Menampilkan antrean konsultasi: janji temu yang sudah "approved" untuk HARI INI.
-     * - Menampilkan beberapa rekam medis terakhir sebagai riwayat.
-     */
     public function index()
     {
         $doctor = Auth::user()->doctorDetail;
@@ -63,7 +58,7 @@ class MedicalRecordController extends Controller
 
         $appointment = Appointment::where('id', $appointmentId)
             ->where('doctor_id', $doctor->id)
-            ->where('status', 'approved')        // hanya untuk janji temu approved
+            ->where('status', 'approved')       
             ->with(['patient.user', 'schedule'])
             ->firstOrFail();
 

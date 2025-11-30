@@ -13,7 +13,6 @@ return new class extends Migration
     {
        if (Schema::hasTable('users') && !Schema::hasColumn('users', 'role')) {
             Schema::table('users', function (Blueprint $table) {
-                // PASTIKAN INI ADALAH STRING DEFAULT
                 $table->string('role')->default('user')->after('password'); 
             });
         }

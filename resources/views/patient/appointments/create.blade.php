@@ -93,7 +93,8 @@
                 {{-- PILIH POLI --}}
                 <div>
                     <label class="block text-xs font-semibold text-gray-600 mb-1">Pilih Poli</label>
-                    <select name="poli_id"
+                    <select id="poli_id"
+                            name="poli_id"
                             class="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm shadow-sm bg-white
                                    focus:ring-2 focus:ring-teal-500 focus:border-teal-500
                                    @error('poli_id') border-rose-500 @enderror"
@@ -108,29 +109,20 @@
                     </select>
                 </div>
 
-                {{-- PILIH DOKTER --}}
+                {{-- PILIH DOKTER (AKAN TERFILTER OLEH POLI) --}}
                 <div>
                     <label class="block text-xs font-semibold text-gray-600 mb-1">Pilih Dokter</label>
-                    <select name="doctor_id"
+                    <select id="doctor_id"
+                            name="doctor_id"
                             class="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm shadow-sm bg-white
                                    focus:ring-2 focus:ring-teal-500 focus:border-teal-500
                                    @error('doctor_id') border-rose-500 @enderror"
                             required>
                         <option value="">-- Pilih Dokter --</option>
-                        @foreach ($doctors as $doctor)
-                            <option value="{{ $doctor->id }}"
-                                {{ old('doctor_id') == $doctor->id ? 'selected' : '' }}>
-                                {{ $doctor->user->name }}
-                                @if ($doctor->poli)
-                                    - ({{ $doctor->poli->name }})
-                                @else
-                                    - (Poli belum diset)
-                                @endif
-                            </option>
-                        @endforeach
+                        {{-- opsi dokter akan diisi via JavaScript berdasarkan poli --}}
                     </select>
                     <p class="mt-1 text-[11px] text-gray-500">
-                        Daftar dokter sudah menampilkan poli masing-masing.
+                        Dokter yang tampil akan otomatis disaring berdasarkan poli yang Anda pilih.
                     </p>
                 </div>
 
@@ -139,7 +131,8 @@
                     <label class="block text-xs font-semibold text-gray-600 mb-1">
                         Pilih Jadwal Konsultasi
                     </label>
-                    <select name="schedule_id"
+                    <select id="schedule_id"
+                            name="schedule_id"
                             class="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm shadow-sm bg-white
                                    focus:ring-2 focus:ring-teal-500 focus:border-teal-500
                                    @error('schedule_id') border-rose-500 @enderror"
@@ -190,4 +183,57 @@
         </form>
     </div>
 </div>
+
+{{-- ====================== JS: FILTER DOKTER BERDASARKAN POLI ====================== --}}
+@php
+    // template URL untuk AJAX
+    $ajaxUrlTemplate = route('patient.appointments.byPoli', ['poli' => '__POLI_ID__']);
+@endphp
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const poliSelect   = document.getElementById('poli_id');
+    const doctorSelect = document.getElementById('doctor_id');
+    const oldDoctorId  = '{{ old('doctor_id') }}';
+    const ajaxUrlTpl   = @json($ajaxUrlTemplate);
+
+    function loadDoctorsByPoli(poliId, selectedId = null) {
+        if (!poliId) {
+            doctorSelect.innerHTML = '<option value="">-- Pilih Dokter --</option>';
+            return;
+        }
+
+        doctorSelect.innerHTML = '<option value="">Memuat dokter...</option>';
+
+        const url = ajaxUrlTpl.replace('__POLI_ID__', poliId);
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                let options = '<option value="">-- Pilih Dokter --</option>';
+
+                data.forEach(function (doctor) {
+                    const selected = (String(doctor.id) === String(selectedId)) ? 'selected' : '';
+                    const poliName = doctor.poli_name ? ' (' + doctor.poli_name + ')' : '';
+                    options += `<option value="${doctor.id}" ${selected}>${doctor.name}${poliName}</option>`;
+                });
+
+                doctorSelect.innerHTML = options;
+            })
+            .catch(() => {
+                doctorSelect.innerHTML = '<option value="">Gagal memuat dokter</option>';
+            });
+    }
+
+    // ketika poli berubah
+    poliSelect.addEventListener('change', function () {
+        loadDoctorsByPoli(this.value, null);
+    });
+
+    // jika form kembali dari validasi & sudah ada poli dipilih => langsung load
+    if (poliSelect.value) {
+        loadDoctorsByPoli(poliSelect.value, oldDoctorId || null);
+    }
+});
+</script>
 @endsection

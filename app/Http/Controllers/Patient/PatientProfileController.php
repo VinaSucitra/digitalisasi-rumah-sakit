@@ -12,8 +12,8 @@ class PatientProfileController extends Controller
     // TAMPILKAN HALAMAN PROFIL PASIEN
     public function edit()
     {
-        $user   = Auth::user();      // user yang login
-        $detail = $user->patient;    // relasi ke detail pasien (model Patient)
+        $user   = Auth::user();      
+        $detail = $user->patient;    
 
         return view('patient.profile', compact('user', 'detail'));
     }
@@ -52,7 +52,7 @@ class PatientProfileController extends Controller
         // PASTIKAN DETAIL PASIEN ADA
         if (!$detail) {
             $detail = $user->patient()->create([
-                'no_rm' => null, // ganti sesuai logika generate RM kalau ada
+                'no_rm' => null, 
             ]);
         }
 

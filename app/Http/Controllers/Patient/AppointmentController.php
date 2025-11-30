@@ -45,9 +45,9 @@ class AppointmentController extends Controller
         }
 
         // Semua poli
-        $polis = Poli::all();
+        $polis = Poli::orderBy('name')->get();
 
-        // Detail dokter + relasi user & poli
+        // Detail dokter + relasi user & poli (kalau mau dipakai di tempat lain)
         $doctors = DoctorDetail::with(['user', 'poli'])
             ->whereNotNull('poli_id')   // hanya dokter yang sudah punya poli
             ->get();
@@ -109,5 +109,25 @@ class AppointmentController extends Controller
         $appointment->load(['doctor.user', 'doctor.poli', 'schedule']);
 
         return view('patient.appointments.show', compact('appointment'));
+    }
+
+    /**
+     * 🔥 AJAX: Ambil dokter berdasarkan poli yang dipilih di form pasien.
+     */
+    public function getDoctorsByPoli(Poli $poli)
+    {
+        $doctors = DoctorDetail::with(['user', 'poli'])
+            ->where('poli_id', $poli->id)
+            ->orderBy('id')
+            ->get()
+            ->map(function ($doctor) {
+                return [
+                    'id'        => $doctor->id,
+                    'name'      => $doctor->user->name ?? 'Dokter',
+                    'poli_name' => $doctor->poli->name ?? null,
+                ];
+            });
+
+        return response()->json($doctors);
     }
 }

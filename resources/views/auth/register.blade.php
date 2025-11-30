@@ -1,63 +1,88 @@
-@extends('layouts.guest')
+@extends('layouts.auth')
 
-@section('title', 'Registrasi Akun')
+@section('title', 'Daftar Akun - RS Digital')
 
 @section('content')
-<div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-100">
-    
-    {{-- Card Registrasi: Fokus di tengah, border atas Teal, Shadow --}}
-    <div class="w-full sm:max-w-md mt-6 px-6 py-4 bg-white shadow-xl overflow-hidden sm:rounded-lg border-t-4 border-teal-500">
+    <h1 class="text-2xl md:text-3xl font-extrabold text-teal-800 text-center mb-2">
+        Daftar Akun Pasien
+    </h1>
+    <p class="text-sm text-gray-500 text-center mb-8">
+        Buat akun baru untuk mengakses layanan janji temu dan rekam medis.
+    </p>
 
-        <div class="text-center mb-8">
-            <h2 class="text-2xl font-bold text-teal-700">Daftar Akun Baru</h2>
-            <p class="text-gray-500 text-sm">Isi data diri Anda di bawah ini</p>
+    {{-- Error validasi --}}
+    @if ($errors->any())
+        <div class="mb-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+            <ul class="list-disc list-inside space-y-1">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    <form method="POST" action="{{ route('register') }}" class="space-y-5">
+        @csrf
+
+        {{-- Nama --}}
+        <div>
+            <label for="name" class="block text-sm font-semibold text-gray-700 mb-1">
+                Nama Lengkap
+            </label>
+            <input id="name" type="text" name="name"
+                   value="{{ old('name') }}"
+                   required autofocus
+                   class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
         </div>
 
-        <form method="POST" action="{{ route('register') }}">
-            @csrf
+        {{-- Email --}}
+        <div>
+            <label for="email" class="block text-sm font-semibold text-gray-700 mb-1">
+                Alamat Email
+            </label>
+            <input id="email" type="email" name="email"
+                   value="{{ old('email') }}"
+                   required
+                   class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
+        </div>
 
-            <div>
-                <label for="name" class="block text-sm font-medium text-gray-700">Nama Lengkap</label>
-                <input id="name" class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:border-teal-500 focus:ring-teal-500" type="text" name="name" value="{{ old('name') }}" required autofocus autocomplete="name" />
-                @error('name')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
-            </div>
+        {{-- Password --}}
+        <div>
+            <label for="password" class="block text-sm font-semibold text-gray-700 mb-1">
+                Password
+            </label>
+            <input id="password" type="password" name="password"
+                   required
+                   class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
+        </div>
 
-            <div class="mt-4">
-                <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
-                <input id="email" class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:border-teal-500 focus:ring-teal-500" type="email" name="email" value="{{ old('email') }}" required autocomplete="username" />
-                @error('email')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
-            </div>
+        {{-- Konfirmasi Password --}}
+        <div>
+            <label for="password_confirmation" class="block text-sm font-semibold text-gray-700 mb-1">
+                Konfirmasi Password
+            </label>
+            <input id="password_confirmation" type="password" name="password_confirmation"
+                   required
+                   class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
+        </div>
 
-            <div class="mt-4">
-                <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-                <input id="password" class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:border-teal-500 focus:ring-teal-500" type="password" name="password" required autocomplete="new-password" />
-                @error('password')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
-            </div>
+        {{-- Tombol daftar --}}
+        <div class="pt-2">
+            <button type="submit"
+                    class="w-full inline-flex justify-center items-center gap-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm py-2.5 shadow">
+                <i class="fas fa-user-plus"></i>
+                <span>DAFTAR SEKARANG</span>
+            </button>
+        </div>
+    </form>
 
-            <div class="mt-4">
-                <label for="password_confirmation" class="block text-sm font-medium text-gray-700">Konfirmasi Password</label>
-                <input id="password_confirmation" class="w-full mt-1 p-2 border border-gray-300 rounded-md focus:border-teal-500 focus:ring-teal-500" type="password" name="password_confirmation" required autocomplete="new-password" />
-                @error('password_confirmation')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
-            </div>
-
-            <div class="flex items-center justify-end mt-4">
-                <a class="underline text-sm text-gray-600 hover:text-teal-600 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition" href="{{ route('login') }}">
-                    Sudah Punya Akun?
-                </a>
-
-                <button type="submit" class="ms-4 inline-flex items-center px-4 py-2 bg-teal-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-teal-700 focus:bg-teal-700 active:bg-teal-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 transition ease-in-out duration-150">
-                    {{ __('Register') }}
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
+    {{-- Link ke login --}}
+    @if (Route::has('login'))
+        <p class="mt-6 text-center text-sm text-gray-600">
+            Sudah punya akun?
+            <a href="{{ route('login') }}" class="text-teal-600 font-semibold hover:text-teal-800">
+                Login di sini
+            </a>
+        </p>
+    @endif
 @endsection

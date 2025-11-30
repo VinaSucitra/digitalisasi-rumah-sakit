@@ -64,7 +64,7 @@ class User extends Authenticatable
 
     public function isDoctor(): bool
     {
-        return $this->role === 'doctor'; // pastikan value di DB = 'dokter'
+        return $this->role === 'doctor'; 
     }
 
     public function isPatient(): bool
@@ -90,22 +90,18 @@ class User extends Authenticatable
         return $this->hasOne(Patient::class, 'user_id');
     }
 
-    /**
-     * Relasi ke Schedule melalui DoctorDetail.
-     * Digunakan jika kamu ingin memanggil:
-     * $user->schedules (untuk user yang berperan sebagai dokter).
-     */
+    
     public function schedules(): HasManyThrough
     {
         return $this->hasManyThrough(
-            Schedule::class,    // model tujuan
-            DoctorDetail::class, // model perantara
+            Schedule::class,    
+            DoctorDetail::class, 
 
-            'user_id',  // FK di doctor_details yang mengacu ke users.id
-            'doctor_id',// FK di schedules yang mengacu ke doctor_details.id
+            'user_id',  
+            'doctor_id',
 
-            'id',       // local key di users
-            'id'        // local key di doctor_details
+            'id',     
+            'id'        
         );
     }
 }

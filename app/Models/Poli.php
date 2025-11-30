@@ -11,7 +11,7 @@ class Poli extends Model
 
     protected $table = 'polis';
 
-    // Tambahkan 'icon' di sini
+    
     protected $fillable = ['name', 'description', 'icon'];
 
     // Relasi 1:N ke DoctorDetail

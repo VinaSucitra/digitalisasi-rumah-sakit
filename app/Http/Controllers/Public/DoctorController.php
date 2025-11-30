@@ -15,10 +15,9 @@ class DoctorController extends Controller
      */
     public function index()
     {
-        // Fetch all doctors from the database
+       
         $doctors = DoctorDetail::all();
 
-        // Return the view with the list of doctors
         return view('public.doctors', compact('doctors'));
     }
 
@@ -30,10 +29,8 @@ class DoctorController extends Controller
      */
     public function show($id)
     {
-        // Find a specific doctor by their ID
         $doctor = Doctor::findOrFail($id);
 
-        // Return the doctor profile view
         return view('public.doctors.show', compact('doctor'));
     }
 }

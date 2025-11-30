@@ -130,16 +130,6 @@
     <footer class="bg-teal-900 text-white mt-16 py-10">
         <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-4 gap-8">
 
-            {{-- Newsletter --}}
-            <div class="col-span-1">
-                <h3 class="text-lg font-bold mb-4">Newsletter</h3>
-                <form>
-                    <input type="email" placeholder="Email Anda" class="w-full px-3 py-2 mb-2 text-gray-800 rounded-sm focus:outline-none">
-                    <button type="submit" class="w-full bg-teal-500 hover:bg-teal-600 text-white font-semibold py-2 rounded-sm transition">
-                        Subscribe
-                    </button>
-                </form>
-            </div>
 
             {{-- Links --}}
             <div>

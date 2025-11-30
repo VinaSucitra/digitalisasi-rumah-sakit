@@ -21,7 +21,7 @@ return new class extends Migration
                 ->constrained('polis')
                 ->onDelete('restrict');
 
-            $table->string('sip')->nullable(); // nomor STR/SIP
+            $table->string('sip')->nullable(); 
             $table->text('bio')->nullable();
 
             $table->timestamps();

@@ -12,12 +12,8 @@ use Illuminate\Validation\Rule;
 
 class PatientController extends Controller
 {
-    /**
-     * LIST PASIEN
-     */
     public function index()
     {
-        // Ambil semua user dengan role 'pasien' + relasi detail pasien
         $patients = User::where('role', 'patient')
             ->with('patient')
             ->get();
@@ -25,17 +21,11 @@ class PatientController extends Controller
         return view('admin.patients.index', compact('patients'));
     }
 
-    /**
-     * FORM TAMBAH PASIEN
-     */
     public function create()
     {
         return view('admin.patients.create');
     }
 
-    /**
-     * SIMPAN PASIEN BARU
-     */
     public function store(Request $request)
     {
         $request->validate([
@@ -50,7 +40,6 @@ class PatientController extends Controller
         ]);
 
         DB::transaction(function () use ($request) {
-            // 1. Buat user dengan role pasien
             $user = User::create([
                 'name'     => $request->name,
                 'email'    => $request->email,
@@ -58,7 +47,6 @@ class PatientController extends Controller
                 'role'     => 'patient',
             ]);
 
-            // 2. Buat detail pasien (no_rm + biodata)
             Patient::create([
                 'user_id'    => $user->id,
                 'no_rm'      => 'RM-' . str_pad($user->id, 5, '0', STR_PAD_LEFT),
@@ -74,12 +62,8 @@ class PatientController extends Controller
             ->with('success', 'Pasien baru berhasil ditambahkan.');
     }
 
-    /**
-     * FORM EDIT PASIEN
-     */
     public function edit($id)
     {
-        // Cari user dengan role = pasien, jika tidak ketemu => 404
         $patient = User::with('patient')
             ->where('role', 'patient')
             ->findOrFail($id);
@@ -87,9 +71,6 @@ class PatientController extends Controller
         return view('admin.patients.edit', compact('patient'));
     }
 
-    /**
-     * UPDATE PASIEN
-     */
     public function update(Request $request, $id)
     {
         $patient = User::with('patient')
@@ -114,8 +95,6 @@ class PatientController extends Controller
         ]);
 
         DB::transaction(function () use ($request, $patient) {
-
-            // 1. Update user
             $dataUser = [
                 'name'  => $request->name,
                 'email' => $request->email,
@@ -127,7 +106,6 @@ class PatientController extends Controller
 
             $patient->update($dataUser);
 
-            // 2. Update / buat detail pasien
             $patient->patient()->updateOrCreate(
                 ['user_id' => $patient->id],
                 [
@@ -145,17 +123,13 @@ class PatientController extends Controller
             ->with('success', 'Data pasien berhasil diperbarui.');
     }
 
-    /**
-     * HAPUS PASIEN
-     */
     public function destroy($id)
     {
         $patient = User::where('role', 'patient')->findOrFail($id);
 
         DB::transaction(function () use ($patient) {
-            // hapus detail pasien dulu (jika FK belum cascade)
+            // Hapus detail pasien sebelum user (antisipasi FK non-cascade)
             Patient::where('user_id', $patient->id)->delete();
-            // lalu hapus user
             $patient->delete();
         });
 

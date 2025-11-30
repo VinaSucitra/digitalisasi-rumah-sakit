@@ -9,45 +9,42 @@ use Illuminate\Http\Request;
 class DoctorListController extends Controller
 {
     /**
-     * Menampilkan daftar semua dokter dengan filter.
+     * Halaman daftar dokter & jadwal (public).
      */
     public function index(Request $request)
     {
-        $polis = Poli::all();
+        $search = $request->search;
+        $poliId = $request->poli_id;
 
-        $doctors = Doctor::with(['user', 'poli'])
-            ->whereHas('user', function($query) {
-                $query->where('is_active', true); // Hanya tampilkan dokter yang aktif
-            });
-        
-        // Filter berdasarkan Poli
-        if ($request->filled('poli_id') && $request->poli_id !== 'all') {
-            $doctors->where('poli_id', $request->poli_id);
-        }
+        // Data poli untuk dropdown filter
+        $polis = Poli::orderBy('name')->get();
 
-        // Filter pencarian berdasarkan nama dokter
-        if ($request->filled('search')) {
-            $searchTerm = '%' . $request->search . '%';
-            $doctors->whereHas('user', function ($query) use ($searchTerm) {
-                $query->where('name', 'like', $searchTerm);
-            });
-        }
+        // Query dokter + relasi
+        $doctors = Doctor::with(['user', 'poli', 'schedules'])
+            ->whereHas('user', function ($query) {
+                $query->where('is_active', true);
+            })
+            ->when($poliId, function ($query) use ($poliId) {
+                // kalau poli_id tidak kosong, filter
+                $query->where('poli_id', $poliId);
+            })
+            ->when($search, function ($query) use ($search) {
+                $query->whereHas('user', function ($q) use ($search) {
+                    $q->where('name', 'like', '%' . $search . '%');
+                });
+            })
+            ->paginate(12)
+            ->withQueryString();
 
-        $doctors = $doctors->paginate(12)->withQueryString();
-
-        return view('doctors.index', compact('doctors', 'polis'));
+        return view('doctors.index', compact('doctors', 'polis', 'search', 'poliId'));
     }
 
     /**
-     * Menampilkan halaman profil detail dokter.
+     * Detail profil dokter (kalau dibutuhkan).
      */
     public function show(Doctor $doctor)
     {
-        // Muat relasi yang dibutuhkan
         $doctor->load(['user', 'poli', 'schedules']);
-
-        // Jika Anda memiliki sistem review, Anda bisa memuatnya di sini
-        // $reviews = $doctor->reviews()->latest()->limit(5)->get();
 
         return view('doctors.show', compact('doctor'));
     }
