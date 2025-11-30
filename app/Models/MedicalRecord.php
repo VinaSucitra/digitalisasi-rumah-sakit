@@ -16,6 +16,10 @@ class MedicalRecord extends Model
         'visit_date',
     ];
 
+    protected $casts = [
+        'visit_date' => 'date',
+    ];
+
     // Relasi ke appointment
     public function appointment()
     {

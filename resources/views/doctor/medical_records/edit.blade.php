@@ -21,7 +21,9 @@
     {{-- KARTU INFORMASI PASIEN --}}
     <div class="bg-teal-50 border border-teal-200 rounded-xl p-4 shadow-sm">
         <h3 class="font-bold text-lg text-teal-900">Pasien: {{ $medical_record->patient->user->name ?? 'N/A' }}</h3>
-        <p class="text-sm text-teal-700">Tanggal Kunjungan: **{{ \Carbon\Carbon::parse($medical_record->visit_date)->format('d F Y') }}**</p>
+        <p class="text-sm text-teal-700">
+            Tanggal Kunjungan: {{ \Carbon\Carbon::parse($medical_record->visit_date)->format('d F Y') }}
+        </p>
         <p class="text-xs text-teal-600 mt-1">
             Janji Temu ID: #{{ $medical_record->appointment_id }}
         </p>
@@ -30,7 +32,7 @@
     {{-- FORM REKAM MEDIS --}}
     <form action="{{ route('doctor.medical_records.update', $medical_record->id) }}" method="POST" class="space-y-8">
         @csrf
-        @method('PUT') {{-- PENTING: Gunakan method PUT untuk update --}}
+        @method('PUT')
         
         {{-- BAGIAN DIAGNOSIS & TINDAKAN --}}
         <div class="bg-white rounded-xl shadow-md p-6 space-y-5 border border-gray-100">
@@ -40,7 +42,7 @@
                 <div>
                     <label for="visit_date" class="block text-sm font-medium text-gray-700 required">Tanggal Kunjungan</label>
                     <input type="date" name="visit_date" id="visit_date" 
-                           value="{{ old('visit_date', $medical_record->visit_date) }}"
+                           value="{{ old('visit_date', $medical_record->visit_date->format('Y-m-d')) }}"
                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 @error('visit_date') border-rose-500 @enderror" 
                            required>
                     @error('visit_date') <p class="text-xs text-rose-500 mt-1">{{ $message }}</p> @enderror
@@ -72,13 +74,14 @@
 
         {{-- BAGIAN RESEP (DINAMIS) --}}
         <div class="bg-white rounded-xl shadow-md p-6 space-y-5 border border-gray-100">
-            <h2 class="text-base font-semibold text-teal-800 border-b pb-2">2. Resep Obat (Perlu penyesuaian di Controller jika ingin di-update)</h2>
+            <h2 class="text-base font-semibold text-teal-800 border-b pb-2">2. Resep Obat</h2>
             
             <div id="medicine-list" class="space-y-4">
                 
                 @php
-                    // Ambil item resep yang sudah ada, atau array kosong jika tidak ada
-                    $existingItems = $medical_record->prescriptions->isNotEmpty() ? $medical_record->prescriptions->first()->items : collect();
+                    $existingItems = $medical_record->prescriptions->isNotEmpty()
+                        ? $medical_record->prescriptions->first()->items
+                        : collect();
                     $medicineCounter = 0;
                 @endphp
 
@@ -131,7 +134,6 @@
                                  <label class="block text-xs font-medium text-gray-700 mb-1">Dosis/Aturan Pakai</label>
                                  <input type="text" name="medicines[0][dosage]" placeholder="e.g. 3x sehari 1 tablet" class="w-full rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500 text-sm">
                             </div>
-                            {{-- Tombol hapus disembunyikan untuk item awal kosong --}}
                         </div>
                     </div>
                     @php $medicineCounter = 1; @endphp
@@ -155,12 +157,10 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    // Inisialisasi counter berdasarkan jumlah item yang sudah ada
     let medicineCount = {{ $medicineCounter }};
     const medicineList = document.getElementById('medicine-list');
     const addMedicineButton = document.getElementById('add-medicine');
     
-    // HTML untuk template item obat
     const medicineTemplate = (index) => `
         <div class="medicine-item grid grid-cols-6 gap-3 p-3 border border-dashed border-gray-300 rounded-lg bg-gray-50">
              <div class="col-span-3">
@@ -195,7 +195,6 @@ document.addEventListener('DOMContentLoaded', function () {
         medicineCount++;
     });
 
-    // Delegasi event untuk tombol hapus
     medicineList.addEventListener('click', (e) => {
         if (e.target.closest('.remove-medicine')) {
             e.target.closest('.medicine-item').remove();

@@ -23,13 +23,12 @@
         <h3 class="font-bold text-lg text-teal-900">Pasien: {{ $appointment->patient->user->name ?? 'N/A' }}</h3>
         <p class="text-sm text-teal-700">Poli: {{ $appointment->doctor->poli->name ?? 'Umum' }}</p>
         <p class="text-xs text-teal-600 mt-1">
-            Janji Temu: {{ \Carbon\Carbon::parse($appointment->appointment_date)->format('d M Y') }} 
-            ({{ date('H:i', strtotime($appointment->schedule->start_time)) ?? '-' }} WIB)
+            Janji Temu: {{ \Carbon\Carbon::parse($appointment->booking_date)->format('d M Y') }} 
+            ({{ $appointment->schedule ? \Carbon\Carbon::parse($appointment->schedule->start_time)->format('H:i') : '-' }} WIB)
         </p>
         <p class="mt-2 text-sm italic text-gray-700">
-            Keluhan: **{{ $appointment->complaint }}**
+            Keluhan: {{ $appointment->complaint }}
         </p>
-        <input type="hidden" name="appointment_id" value="{{ $appointment->id }}">
     </div>
 
     {{-- FORM REKAM MEDIS --}}
@@ -37,7 +36,7 @@
         @csrf
         
         <input type="hidden" name="appointment_id" value="{{ $appointment->id }}">
-        <input type="hidden" name="visit_date" value="{{ now()->toDateString() }}"> {{-- Diambil dari tanggal kunjungan hari ini --}}
+        <input type="hidden" name="visit_date" value="{{ now()->toDateString() }}">
 
         {{-- BAGIAN DIAGNOSIS & TINDAKAN --}}
         <div class="bg-white rounded-xl shadow-md p-6 space-y-5 border border-gray-100">
@@ -91,7 +90,7 @@
                              <label class="block text-xs font-medium text-gray-700 mb-1">Dosis/Aturan Pakai</label>
                              <input type="text" name="medicines[0][dosage]" placeholder="e.g. 3x sehari 1 tablet" class="w-full rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500 text-sm">
                         </div>
-                        {{-- Tombol Hapus disembunyikan untuk item pertama --}}
+                        {{-- Item pertama tidak ada tombol hapus --}}
                     </div>
                 </div>
             </div>
@@ -116,7 +115,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const medicineList = document.getElementById('medicine-list');
     const addMedicineButton = document.getElementById('add-medicine');
     
-    // HTML untuk template item obat
     const medicineTemplate = (index) => `
         <div class="medicine-item grid grid-cols-6 gap-3 p-3 border border-dashed border-gray-300 rounded-lg bg-gray-50">
              <div class="col-span-3">
@@ -151,7 +149,6 @@ document.addEventListener('DOMContentLoaded', function () {
         medicineCount++;
     });
 
-    // Delegasi event untuk tombol hapus
     medicineList.addEventListener('click', (e) => {
         if (e.target.closest('.remove-medicine')) {
             e.target.closest('.medicine-item').remove();

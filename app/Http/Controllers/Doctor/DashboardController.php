@@ -12,7 +12,7 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        $user = Auth::user();
+        $user   = Auth::user();
         $doctor = $user->doctorDetail;
 
         if (!$doctor) {
@@ -44,7 +44,7 @@ class DashboardController extends Controller
         // 4. Total jadwal praktik dokter ini
         $totalSchedules = $doctor->schedules()->count();
 
-        // ⭐ 5. Daftar antrian hari ini (QUEUE SYSTEM)
+        // 5. Daftar antrian hari ini (QUEUE SYSTEM)
         $todayQueue = Appointment::where('doctor_id', $doctor->id)
             ->where('status', 'approved')
             ->whereDate('booking_date', $today)
@@ -59,7 +59,7 @@ class DashboardController extends Controller
             'latestPatients',
             'totalSchedules',
             'today',
-            'todayQueue' // 🔥 kirim ke view
+            'todayQueue'
         ));
     }
 }

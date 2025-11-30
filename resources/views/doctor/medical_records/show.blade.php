@@ -35,7 +35,7 @@
                 <p class="font-medium text-gray-800">Pasien</p>
                 <p class="text-teal-600 font-semibold">{{ $medical_record->patient->user->name ?? 'N/A' }}</p>
             </div>
-             <div class="text-sm">
+            <div class="text-sm">
                 <p class="font-medium text-gray-800">Dokter</p>
                 <p class="text-gray-600">Dr. {{ $medical_record->doctor->user->name ?? 'N/A' }}</p>
             </div>
@@ -77,7 +77,7 @@
             @if($medical_record->prescriptions->isNotEmpty())
                  <span class="text-xs font-normal text-gray-500">Status Resep: 
                      <span class="font-semibold text-amber-600">
-                         {{ ucfirst($medical_record->prescriptions->first()->status ?? 'Pending') }}
+                         {{ ucfirst($medical_record->prescriptions->first()->status ?? 'pending') }}
                      </span>
                  </span>
             @endif

@@ -5,17 +5,11 @@ namespace App\Http\Controllers\Doctor;
 use App\Http\Controllers\Controller;
 use App\Models\Schedule;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Log;
 
 class ScheduleController extends Controller
 {
-    /**
-     * Mapping hari yang dipakai di dropdown.
-     * Key disimpan di DB (lowercase), value untuk tampilan.
-     */
     private array $days = [
         'senin'   => 'Senin',
         'selasa'  => 'Selasa',
@@ -27,16 +21,16 @@ class ScheduleController extends Controller
     ];
 
     /**
-     * Dokter melihat semua jadwal praktik miliknya sendiri.
+     * List My Schedules
      */
     public function index()
     {
-        $doctorId = $this->getLoggedInDoctorId();
+        $doctor = auth()->user()->doctorDetail; // relasi user -> doctor_detail
 
-        $schedules = Schedule::where('doctor_id', $doctorId)
+        $schedules = Schedule::where('doctor_id', $doctor->id)
             ->orderByRaw("FIELD(day_of_week, 'senin','selasa','rabu','kamis','jumat','sabtu','minggu')")
             ->orderBy('start_time')
-            ->get();
+            ->paginate(15);
 
         return view('doctor.schedules.index', [
             'schedules' => $schedules,
@@ -45,220 +39,156 @@ class ScheduleController extends Controller
     }
 
     /**
-     * Form tambah jadwal baru.
+     * Form Create Schedule
      */
     public function create()
     {
-        $days = $this->days;
-
-        return view('doctor.schedules.create', compact('days'));
+        return view('doctor.schedules.create', [
+            'days' => $this->days,
+        ]);
     }
 
     /**
-     * Simpan jadwal baru untuk dokter yang sedang login.
+     * Store Schedule – durasi selalu 30 menit, tidak boleh tumpang tindih
      */
     public function store(Request $request)
     {
-        $doctorId = $this->getLoggedInDoctorId();
+        $doctor = auth()->user()->doctorDetail;
 
-        // Normalisasi input: hari lowercase, waktu ke format H:i
+        // normalisasi input
         $request->merge([
             'day_of_week' => strtolower($request->day_of_week),
-            'start_time'  => $request->start_time
-                ? Carbon::parse($request->start_time)->format('H:i')
-                : null,
-            'end_time'    => $request->end_time
-                ? Carbon::parse($request->end_time)->format('H:i')
-                : null,
         ]);
 
-        try {
-            // Validasi field hari & jam (tanpa doctor_id, karena kita pakai dokter login)
-            $validated = $this->validateScheduleRequest($request);
+        // validasi dasar
+        $validated = $request->validate([
+            'day_of_week' => ['required', Rule::in(array_keys($this->days))],
+            'start_time'  => ['required', 'date_format:H:i'],
+        ]);
 
-            // Tambahkan doctor_id dokter yang login
-            $validated['doctor_id'] = $doctorId;
+        // hitung otomatis end_time = start + 30 menit
+        $start = Carbon::createFromFormat('H:i', $validated['start_time']);
+        $end   = (clone $start)->addMinutes(30);
 
-            // Cek bentrok jadwal (overlap) di hari yang sama
-            if ($this->isOverlapping($doctorId, $validated['day_of_week'], $validated['start_time'], $validated['end_time'])) {
-                return back()->withInput()->withErrors([
-                    'start_time' => 'Jadwal bertabrakan dengan jadwal lain pada hari ' . $this->days[$validated['day_of_week']] . '.',
+        $startStr = $start->format('H:i');
+        $endStr   = $end->format('H:i');
+
+        // cek tumpang tindih
+        $overlap = Schedule::where('doctor_id', $doctor->id)
+            ->where('day_of_week', $validated['day_of_week'])
+            ->where(function ($q) use ($startStr, $endStr) {
+                $q->whereBetween('start_time', [$startStr, $endStr])
+                  ->orWhereBetween('end_time', [$startStr, $endStr])
+                  ->orWhere(function ($q2) use ($startStr, $endStr) {
+                      $q2->where('start_time', '<=', $startStr)
+                         ->where('end_time', '>=', $endStr);
+                  });
+            })
+            ->exists();
+
+        if ($overlap) {
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'start_time' => 'Jadwal bertumpuk dengan jadwal lain pada hari ' .
+                                    $this->days[$validated['day_of_week']] . '.',
                 ]);
-            }
-
-            Schedule::create($validated);
-
-            return redirect()
-                ->route('doctor.schedules.index')
-                ->with('success', 'Jadwal praktik berhasil ditambahkan.');
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return back()->withInput()->withErrors($e->errors());
-        } catch (\Exception $e) {
-            Log::error("Schedule Store Error (Doctor): " . $e->getMessage(), ['exception' => $e]);
-
-            $msg = $e->getMessage() === 'Jam selesai harus lebih besar dari jam mulai.'
-                ? $e->getMessage()
-                : 'Gagal menyimpan jadwal. Silakan coba lagi atau hubungi admin.';
-
-            return back()->withInput()
-                ->with('error', $msg)
-                ->withErrors(['general' => $msg]);
         }
+
+        Schedule::create([
+            'doctor_id'  => $doctor->id,
+            'day_of_week'=> $validated['day_of_week'],
+            'start_time' => $startStr,
+            'end_time'   => $endStr,
+        ]);
+
+        return redirect()->route('doctor.schedules.index')
+            ->with('success', 'Jadwal baru berhasil ditambahkan.');
     }
 
     /**
-     * Form edit jadwal. Dokter hanya boleh mengedit jadwal miliknya sendiri.
+     * Form Edit
      */
     public function edit(Schedule $schedule)
     {
-        $this->authorizeSchedule($schedule);
+        $doctor = auth()->user()->doctorDetail;
 
-        $days = $this->days;
+        // pastikan jadwal ini milik dokter yang login
+        abort_if($schedule->doctor_id !== $doctor->id, 403);
 
-        return view('doctor.schedules.edit', compact('schedule', 'days'));
+        return view('doctor.schedules.edit', [
+            'schedule' => $schedule,
+            'days'     => $this->days,
+        ]);
     }
 
     /**
-     * Update jadwal praktik.
+     * Update Schedule
      */
     public function update(Request $request, Schedule $schedule)
     {
-        $this->authorizeSchedule($schedule);
+        $doctor = auth()->user()->doctorDetail;
+        abort_if($schedule->doctor_id !== $doctor->id, 403);
 
-        $doctorId = $this->getLoggedInDoctorId();
-
-        // Normalisasi input
         $request->merge([
             'day_of_week' => strtolower($request->day_of_week),
-            'start_time'  => $request->start_time
-                ? Carbon::parse($request->start_time)->format('H:i')
-                : null,
-            'end_time'    => $request->end_time
-                ? Carbon::parse($request->end_time)->format('H:i')
-                : null,
         ]);
 
-        try {
-            $validated = $this->validateScheduleRequest($request);
+        $validated = $request->validate([
+            'day_of_week' => ['required', Rule::in(array_keys($this->days))],
+            'start_time'  => ['required', 'date_format:H:i'],
+        ]);
 
-            // Tambahkan doctor_id dokter login (jaga-jaga)
-            $validated['doctor_id'] = $doctorId;
+        $start = Carbon::createFromFormat('H:i', $validated['start_time']);
+        $end   = (clone $start)->addMinutes(30);
 
-            // Cek bentrok jadwal, kecuali dengan jadwal yang sedang diedit
-            if ($this->isOverlapping(
-                $doctorId,
-                $validated['day_of_week'],
-                $validated['start_time'],
-                $validated['end_time'],
-                $schedule->id
-            )) {
-                return back()->withInput()->withErrors([
-                    'start_time' => 'Jadwal bertabrakan dengan jadwal lain pada hari ' . $this->days[$validated['day_of_week']] . '.',
+        $startStr = $start->format('H:i');
+        $endStr   = $end->format('H:i');
+
+        // cek tumpang tindih (kecuali jadwal yang sedang di-edit)
+        $overlap = Schedule::where('doctor_id', $doctor->id)
+            ->where('day_of_week', $validated['day_of_week'])
+            ->where('id', '!=', $schedule->id)
+            ->where(function ($q) use ($startStr, $endStr) {
+                $q->whereBetween('start_time', [$startStr, $endStr])
+                  ->orWhereBetween('end_time', [$startStr, $endStr])
+                  ->orWhere(function ($q2) use ($startStr, $endStr) {
+                      $q2->where('start_time', '<=', $startStr)
+                         ->where('end_time', '>=', $endStr);
+                  });
+            })
+            ->exists();
+
+        if ($overlap) {
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'start_time' => 'Jadwal bertumpuk dengan jadwal lain pada hari ' .
+                                    $this->days[$validated['day_of_week']] . '.',
                 ]);
-            }
-
-            $schedule->update($validated);
-
-            return redirect()
-                ->route('doctor.schedules.index')
-                ->with('success', 'Jadwal praktik berhasil diperbarui.');
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return back()->withInput()->withErrors($e->errors());
-        } catch (\Exception $e) {
-            Log::error("Schedule Update Error (Doctor): " . $e->getMessage(), ['exception' => $e]);
-
-            $msg = $e->getMessage() === 'Jam selesai harus lebih besar dari jam mulai.'
-                ? $e->getMessage()
-                : 'Gagal memperbarui jadwal. Silakan coba lagi atau hubungi admin.';
-
-            return back()->withInput()
-                ->with('error', $msg)
-                ->withErrors(['general' => $msg]);
         }
+
+        $schedule->update([
+            'day_of_week' => $validated['day_of_week'],
+            'start_time'  => $startStr,
+            'end_time'    => $endStr,
+        ]);
+
+        return redirect()->route('doctor.schedules.index')
+            ->with('success', 'Jadwal berhasil diperbarui.');
     }
 
     /**
-     * Hapus jadwal praktik.
+     * Hapus jadwal
      */
     public function destroy(Schedule $schedule)
     {
-        $this->authorizeSchedule($schedule);
+        $doctor = auth()->user()->doctorDetail;
+        abort_if($schedule->doctor_id !== $doctor->id, 403);
 
         $schedule->delete();
 
-        return redirect()
-            ->route('doctor.schedules.index')
-            ->with('success', 'Jadwal praktik berhasil dihapus.');
-    }
-
-    /**
-     * Validasi field jadwal (tanpa doctor_id karena di-set dari dokter login).
-     */
-    protected function validateScheduleRequest(Request $request): array
-    {
-        return $request->validate([
-            'day_of_week' => ['required', Rule::in(array_keys($this->days))],
-            'start_time'  => ['required', 'date_format:H:i'],
-            'end_time'    => ['required', 'date_format:H:i', 'after:start_time'],
-        ]);
-    }
-
-    /**
-     * Cek apakah jadwal bentrok (overlap) dengan jadwal lain di hari yang sama.
-     */
-    protected function isOverlapping(
-        int $doctorId,
-        string $dayOfWeek,
-        string $startTime,
-        string $endTime,
-        ?int $ignoreId = null
-    ): bool {
-        $query = Schedule::where('doctor_id', $doctorId)
-            ->where('day_of_week', $dayOfWeek);
-
-        if ($ignoreId) {
-            $query->where('id', '!=', $ignoreId);
-        }
-
-        return $query->where(function ($q) use ($startTime, $endTime) {
-            $q->whereBetween('start_time', [$startTime, $endTime])
-              ->orWhereBetween('end_time', [$startTime, $endTime])
-              ->orWhere(function ($q2) use ($startTime, $endTime) {
-                  $q2->where('start_time', '<=', $startTime)
-                     ->where('end_time', '>=', $endTime);
-              });
-        })->exists();
-    }
-
-    /**
-     * Ambil ID dokter dari user yang login.
-     * Sesuaikan relasi ini dengan project-mu:
-     * misal: User -> hasOne(DoctorDetail, 'user_id')
-     */
-    protected function getLoggedInDoctorId(): int
-    {
-        $user = Auth::user();
-
-        // SESUAIKAN nama relasi ini dengan yang ada di model User-mu
-        // misal: $user->doctorDetail atau $user->doctor
-        $doctorDetail = $user->doctorDetail; 
-
-        if (! $doctorDetail) {
-            abort(403, 'Akun ini tidak memiliki data dokter.');
-        }
-
-        return $doctorDetail->id;
-    }
-
-    /**
-     * Pastikan jadwal yang diakses memang milik dokter yang login.
-     */
-    protected function authorizeSchedule(Schedule $schedule): void
-    {
-        $doctorId = $this->getLoggedInDoctorId();
-
-        if ($schedule->doctor_id !== $doctorId) {
-            abort(403, 'Anda tidak berhak mengelola jadwal ini.');
-        }
+        return redirect()->route('doctor.schedules.index')
+            ->with('success', 'Jadwal berhasil dihapus.');
     }
 }

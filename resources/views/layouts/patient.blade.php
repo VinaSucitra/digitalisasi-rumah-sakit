@@ -45,6 +45,7 @@
             <p class="px-3 text-[11px] font-semibold tracking-wide text-teal-400 uppercase mt-4 mb-1">
                 Layanan
             </p>
+
             {{-- Buat Janji Temu --}}
             <a href="{{ route('patient.appointments.create') }}"
                class="flex items-center gap-3 px-3 py-2 rounded-lg
@@ -73,6 +74,7 @@
             <p class="px-3 text-[11px] font-semibold tracking-wide text-teal-400 uppercase mt-4 mb-1">
                 Informasi
             </p>
+
             {{-- Jadwal Dokter --}}
             @if(Route::has('patient.doctor_schedules.index'))
                 <a href="{{ route('patient.doctor_schedules.index') }}"
@@ -84,25 +86,29 @@
             @endif
         </nav>
 
-        {{-- FOOTER USER --}}
-        <div class="border-t border-teal-800 px-4 py-3 flex items-center justify-between text-xs">
-            <div class="flex items-center gap-2">
+        {{-- ========== FOOTER USER (PROFILE + LOGOUT SEJAJAR) ========== --}}
+        <div class="border-t border-teal-800 px-4 py-3 flex items-center justify-between">
+            {{-- Profile: klik untuk ke halaman profil pasien --}}
+            <a href="{{ route('patient.profile.edit') }}" class="flex items-center gap-2">
                 <div class="w-8 h-8 rounded-full bg-teal-700 flex items-center justify-center">
                     <i class="fas fa-user text-teal-50 text-sm"></i>
                 </div>
-                <div>
-                    <p class="font-semibold">
+                <div class="text-xs leading-tight">
+                    <p class="font-semibold text-teal-50">
                         {{ auth()->user()->name ?? 'Pasien' }}
                     </p>
                     <p class="text-teal-300 text-[11px]">
                         {{ auth()->user()->email ?? '' }}
                     </p>
                 </div>
-            </div>
+            </a>
+
+            {{-- Logout --}}
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
                 <button type="submit"
-                        class="text-teal-200 hover:text-white hover:bg-teal-700 rounded-full p-2 transition">
+                        class="text-teal-200 hover:text-white hover:bg-teal-700 rounded-full p-2 transition"
+                        title="Logout">
                     <i class="fas fa-right-from-bracket"></i>
                 </button>
             </form>
